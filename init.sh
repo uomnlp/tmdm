@@ -36,7 +36,7 @@ echo "'VERSION' for $VERSION"
 echo "'DESCRIPTION' for $DESCRIPTION"
 echo "'URL' for $URL"
 echo "'LICENSE' for $LICENSE"
-sed "s/PROJECT_NAME/$PROJECT_NAME/g;s/AUTHOR/$AUTHOR/g;s/EMAIL/$EMAIL/g;s/VERSION/$VERSION/g;s/DESCRIPTION/$DESCRIPTION/g;s/URL/$URL/g;s/LICENSE/$LICENSE/g;" setup.py >done-setup.py
+sed "s/PROJECT_NAME/$PROJECT_NAME/g;s/AUTHOR/$AUTHOR/g;s/EMAIL/$EMAIL/g;s/VERSION/$VERSION/g;s/DESCRIPTION/$DESCRIPTION/g;s|URL|$URL|g;s/LICENSE/$LICENSE/g;" setup.py >done-setup.py
 echo "Done!"
 echo "in docs/conf.py..."
 echo "'PROJECT_NAME' for $PROJECT_NAME"
