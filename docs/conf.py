@@ -19,14 +19,14 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'PROJECT_NAME'
-copyright = "COPYRIGHT"
-author = 'AUTHOR'
+project = 'tmdm'
+copyright = "2020, Viktor Schlegel"
+author = 'Viktor Schlegel'
 
 # The short X.Y version
-version = 'SHORT_VERSION'
+version = '0.0'
 # The full version, including alpha/beta/rc tags
-release = 'RELEASE'
+release = '0.0.1'
 
 # -- General configuration ---------------------------------------------------
 
@@ -105,7 +105,7 @@ html_theme = 'alabaster'
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PROJECT_NAMEdoc'
+htmlhelp_basename = 'tmdmdoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -131,8 +131,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PROJECT_NAME.tex', 'PROJECT_NAME Documentation',
-     'AUTHOR', 'manual'),
+    (master_doc, 'tmdm.tex', 'tmdm Documentation',
+     'Viktor Schlegel', 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------
