@@ -1,0 +1,11 @@
+[default]
+force = false
+log_level = "DEBUG"
+
+[development]
+force = true
+log_level = "TRACE"
+
+[testing]
+force = true
+test="test123"

@@ -1,0 +1,8 @@
+dynaconf
+scispacy
+fastcache
+overrides
+srsly
+ujson
+spacy
+loguru

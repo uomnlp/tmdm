@@ -1,1 +1,7 @@
 .idea/*
+.coverage
+__pycache__
+/tests/legacy/
+/tmdm/legacy.py
+/logs/
+/.in
