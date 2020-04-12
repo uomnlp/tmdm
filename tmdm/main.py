@@ -6,6 +6,7 @@ from scispacy.custom_tokenizer import combined_rule_tokenizer
 from spacy.language import Language
 
 from tmdm.classes import Provider, Cached
+from tmdm.pipe.coref import CorefPipe
 from tmdm.pipe.ne import NEPipe
 from tmdm.pipe.oie import OIEPipe
 from tmdm.pipe.tokenizer import IDTokenizer
@@ -46,3 +47,9 @@ def add_oie(nlp, provider: Union[Provider, str], schema='list_of_tuples_bio_stac
     if isinstance(provider, str):
         provider = Cached(path=provider, getter=lambda d: d['abstract'], schema=schema)
     nlp.add_pipe(OIEPipe(nlp.vocab, provider))
+
+
+def add_coref(nlp, provider: Union[Provider, str], schema='list_of_tuples_bio_stacked'):
+    if isinstance(provider, str):
+        provider = Cached(path=provider, getter=lambda d: d['abstract'], schema=schema)
+    nlp.add_pipe(CorefPipe(nlp.vocab, provider))

@@ -12,9 +12,9 @@ nlp = tmdm_pipeline(getter=None)
 def test_same_where_not_equals():
     doc = nlp("Cheesecake is great.")
     doc._.id = "Cheesecake"
-    doc._.nes = [(0, len("Cheesecake"), "CAKE")]
-    assert not doc._.nes[0] == doc[0:1]
-    assert doc._.nes[0]._.same(doc[0:1])
+    doc._.corefs = [(0, len("Cheesecake"), "CAKE")]
+    assert not doc._.corefs[0] == doc[0:1]
+    assert doc._.corefs[0]._.same(doc[0:1])
 
 
 def test_ner_data_model():
@@ -26,12 +26,12 @@ def test_ner_data_model():
             "O"]
     doc = nlp("The president of the United States Donald Trump gave a speech today in London.")
     doc._.id = "President"
-    doc._.nes = offsets_from_biluo_tags(doc, tags)
-    for ne in doc._.nes:
+    doc._.corefs = offsets_from_biluo_tags(doc, tags)
+    for ne in doc._.corefs:
         assert isinstance(ne, NamedEntity)
         assert isinstance(ne, Span)
 
-    nes: List[NamedEntity] = doc._.nes
+    nes: List[NamedEntity] = doc._.corefs
 
     assert len(nes) == 4
     assert nes[0].text == "the United States"
