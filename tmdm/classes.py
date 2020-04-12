@@ -120,5 +120,4 @@ class Cached(Provider):
                 return annotations
 
 
-class Online:
-    ...
+
