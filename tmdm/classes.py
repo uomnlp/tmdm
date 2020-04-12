@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import namedtuple
 from typing import Any, Dict, Tuple, List, Iterable, Union, Callable
 
 from loguru import logger
@@ -9,6 +10,8 @@ from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
 from tmdm import util
 
 from tmdm.util import get_offsets, get_offsets_from_sentences
+
+ERTuple = namedtuple("ERTuple", ["entities", "relations"])
 
 # Typed Entities and Relationships
 EntitiesAnnotation = List[Tuple[int, int, str]]
@@ -70,8 +73,8 @@ class Cached(Provider):
         "tuple_of_lists_of_lists": lambda doc, annotation:
         get_offsets_from_sentences(doc.text, ((w, l) for ws, ls in zip(*annotation[:2]) for w, l in zip(ws, ls)))
 
-        #TODO: BRAT
-        #TODO: Pubmed
+        # TODO: BRAT
+        # TODO: Pubmed
     }
 
     def __init__(self, schema: Union[str, Callable[[Doc, Any], OffsetAnnotation]] = None, getter=None,
@@ -109,7 +112,7 @@ class Cached(Provider):
         if annotations:
             if self.schema:
                 if self.schema == OFFSETS:
-                    return annotations
+                    return self.getter(annotations) if self.getter else annotations
                 else:
                     return self.schema(doc, self.getter(annotations) if self.getter else annotations)
             else:

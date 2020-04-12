@@ -36,7 +36,7 @@ def set_nes(self, nes):
         logger.error("Cannot re-set tokens (yet)!")
         raise NotImplementedError("Cannot re-set tokens (yet)!")
     for idx, (start, end, label) in enumerate(nes):
-        logger.debug(nes)
+        logger.trace(nes)
         for token in self._.char_span_relaxed(start, end):
             annotations = token._._nes
             if idx not in annotations:
