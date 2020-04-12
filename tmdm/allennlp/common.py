@@ -1,6 +1,7 @@
 from allennlp.data import Instance
 from allennlp.models import load_archive
-from allennlp.predictors import CorefPredictor, Predictor
+from allennlp.predictors import Predictor
+from loguru import logger
 from overrides import overrides
 from spacy.tokens import Doc
 from typing import Iterable, Callable, Any, Dict
@@ -38,22 +39,25 @@ class OnlinePredictor(Provider):
         self.predictor = Predictor.from_archive(load_archive(path), self.task)
 
     def annotate_document(self, doc: Doc) -> OffsetAnnotation:
-        return self.annotate_batch[0]
+        return self.annotate_batch([doc])[0]
 
     def _preprocess(self, doc: Doc):
-        self.predictor._dataset_reader.text_to_instance([[word.text for word in sentence] for sentence in doc.sents])
+        return self.predictor._dataset_reader. \
+            text_to_instance([[word.text for word in sentence] for sentence in doc.sents])
 
     def _converter(self):
         ...
 
     @overrides
     def annotate_batch(self, docs: Iterable[Doc]):
+        logger.trace("Entering annotate batch...")
         instances = [self.preprocess(doc) for doc in docs]
         try:
             result = self.predictor.predict_batch_instance(instances)
-        except:
+        except Exception as e:
+            logger.error(str(e))
             return [[] for _ in docs]
         result_iterator = iter(result)
         return [
-            self.converter(self.getter(next(result_iterator)) if self.getter else next(result_iterator)) for _ in docs
+            self.converter(doc, self.getter(next(result_iterator)) if self.getter else next(result_iterator)) for doc in docs
         ]
