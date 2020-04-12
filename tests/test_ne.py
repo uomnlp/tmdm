@@ -3,7 +3,7 @@ from typing import List
 
 from spacy.tokens import Span
 
-from tmdm.main import tmdm_pipeline, add_ner
+from tmdm.main import tmdm_pipeline
 from tmdm.model.ne import NamedEntity
 
 nlp = tmdm_pipeline(getter=None)
