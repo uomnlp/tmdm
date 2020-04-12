@@ -1,6 +1,6 @@
 [default]
 force = false
-log_level = "DEBUG"
+log_level = "INFO"
 
 [development]
 force = true
