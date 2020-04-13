@@ -1,5 +1,5 @@
 import string
-
+import tmdm
 from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
@@ -10,8 +10,6 @@ from typing import List, Iterable
 from loguru import logger
 
 from typing import Tuple
-
-from tmdm.classes import EntitiesRelationshipsAnnotation
 
 ACCEPTED_FORMATS = ('mpk', 'json', 'pkl')
 
@@ -138,7 +136,8 @@ def bio_generator(tags: List[str], sep='-') -> Tuple[Tuple[int, int], str]:
                     yield (start, i + 1), category
 
 
-def entities_relations_from_by_verb(by_verb: List[List[Tuple[int, int, str]]]) -> EntitiesRelationshipsAnnotation:
+def entities_relations_from_by_verb(
+        by_verb: List[List[Tuple[int, int, str]]]) -> 'tmdm.classes.EntitiesRelationshipsAnnotation':
     entities = []
     relations = []
     for verb_annotations in by_verb:
