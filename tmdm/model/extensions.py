@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from typing import Tuple, Union, Callable
+from typing import Tuple, Union, Callable, Dict, List, Type
 
 from dynaconf import settings
 from fastcache import clru_cache
@@ -77,7 +77,7 @@ def same(self: Span, other: Span):
 @extend(Doc)
 @clru_cache(maxsize=100000)
 def char_span_relaxed(self: Doc, start: int, end: int):
-    logger.debug("Not cached....")
+    logger.trace(f"Computing not cached doc.char_span({start},{end})")
     span = self.char_span(start, end)
     if not span:
         token_map = self._.token_map
@@ -134,7 +134,7 @@ def get_sent(self, n: int):
 
 class Annotation(Span):
     idx: int = None
-    cache = defaultdict(dict)
+    cache: Dict[Type, Dict[str, Dict[int, List]]] = defaultdict(lambda: defaultdict(dict))
 
     @property
     def fqn(self):
@@ -142,16 +142,16 @@ class Annotation(Span):
 
     @classmethod
     def make(cls, doc: Doc, idx: int, start, end, label, *args, **kwargs):
-        if not doc._.id or not cls.cache[doc._.id].get(idx, None):
+        if not doc._.id or not cls.cache[cls][doc._.id].get(idx, None):
 
             span = doc._.char_span_relaxed(start, end)
             span = cls(doc, span.start, span.end, label, *args, **kwargs)
             span.idx = idx
             logger.trace(f"creating {span.fqn}")
             if doc._.id:
-                cls.cache[doc._.id][idx] = span
+                cls.cache[cls][doc._.id][idx] = span
             else:
                 logger.trace('Id not set for doc, omit caching...')
         else:
-            logger.trace(f"{cls.cache[doc._.id][idx]} is in cache!")
-        return cls.cache[doc._.id][idx]
+            logger.trace(f"{cls.cache[cls][doc._.id][idx]} is in cache!")
+        return cls.cache[cls][doc._.id][idx]

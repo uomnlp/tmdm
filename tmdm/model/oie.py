@@ -12,7 +12,7 @@ from tmdm.model.extensions import Annotation, extend
 
 # HAS SCIENCE GONE TOO FAR?
 def _make(doc, i):
-    return (Verb if doc._._oies.entities[i][2] == "VERB" else Argument).make(doc, i)
+    return (Verb if doc._._oies.entities[i][2].startswith("V") else Argument).make(doc, i)
 
 
 @extend(Token, type='property', create_attribute=True, default=[])
@@ -101,14 +101,6 @@ class Verb(Annotation):
         if self.continuous:
             return self._extended_span
 
-    # _arguments_as_map: Dict[int, 'Argument']
-    # extended_span: Tuple[int, int]
-    # continuous: bool
-
-    # def set_arguments(self, arguments: List['Argument']):
-    #     self.arguments = arguments
-    #     self.arguments_as_map = {a.label_: a for a in arguments}
-    #
     def argument(self, order):
         return Argument.make(self.doc, self._arguments[order])
 
@@ -126,45 +118,37 @@ class Verb(Annotation):
         return verb
 
 
-# Prune same arguments
-# Argument.merge_all(arg for p in oie_extractions for arg in p.arguments)
-# return oie_extractions
+@extend(Span)
+def get_verb(self: Span) -> Optional['Verb']:
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    return next(
+        (Verb.make(self.doc, i) for i, (s, e, l) in enumerate(self.doc._._oies.entities)
+         if start == s and end == e and l.startswith("V")),
+        None
+    )
 
-# result = []
-# tags: List[List[Tuple[int, int, str]]] = self._._oies
-# if not tags:
-#     logger.warning("No OIEs extracted for this document (yet?).")
-#     logger.debug(tags)
-# for i, verb_tags in enumerate(tags):
-#     logger.debug("Beginning...")
-#     verb_start, verb_end = next((s, e) for s, e, l in verb_tags if l == "VERB")
-#     span = self.char_span(verb_start, verb_end)
-#     verb_start, verb_end = span.start, span.end
-#     verb = Verb(self, verb_start, verb_end, "VERB")
-#     logger.info(f"Processing: {verb}")
-#     verb.update_token_annotations(i)
-#     args = []
-#     logger.debug(f"Processed {verb}")
-#     for j, (arg_start, arg_end, order) in enumerate(((s, e, l) for s, e, l in verb_tags if not l == 'VERB'),
-#                                                     len(Argument.cache[tmdm.model.extensions.name])):
-#         # TODO: potentially: split order by '-'
-#         span = self.char_span(arg_start, arg_end)
-#         arg_start, arg_end = span.start, span.end
-#         a = Argument(self, arg_start, arg_end, order)
-#         a.update_token_annotations(j)
-#         a.verb = verb
-#         args.append(a)
-#
-#     verb.set_arguments(args)
-#     all_spans = sorted([(verb_start, verb_end)] + [(a.start, a.end) for a in args])
-#
-#     # explosion of pythonicism
-#     verb.continuous = all(
-#         end_previous == start_next for (_, end_previous), (start_next, _)
-#         in zip(all_spans, all_spans[1:])
-#     )
-#     verb.extended_span = all_spans[0][0], all_spans[-1][1]
-# return result
+
+@extend(Span)
+def is_verb(self: Span) -> bool:
+    return self._.get_verb() is not None
+
+
+@extend(Span)
+def get_argument(self: Span) -> Optional['Argument']:
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    return next(
+        (Argument.make(self.doc, i) for i, (s, e, l) in enumerate(self.doc._._oies.entities)
+         if start == s and end == e and l.startswith("ARG")),
+        None
+    )
+
+
+@extend(Span)
+def is_argument(self: Span) -> bool:
+    return self._.get_argument() is not None
+
 
 class Argument(Annotation):
     _verbs: List[int]
