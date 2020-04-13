@@ -1,7 +1,7 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Optional
 from dynaconf import settings
-from spacy.tokens import Doc, Token
+from spacy.tokens import Doc, Token, Span
 from loguru import logger
 
 from tmdm.model.extensions import Annotation, extend
@@ -67,8 +67,22 @@ def nes(self: Doc) -> List['NamedEntity']:
     return nes
 
 
+@extend(Span)
+def get_ne(self: Span) -> Optional['NamedEntity']:
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    return next(
+        (NamedEntity.make(self.doc, i) for i, (s, e, _) in enumerate(self.doc._._nes) if start == s and end == e),
+        None
+    )
+
+
+@extend(Span)
+def is_ne(self: Span) -> bool:
+    return self._.get_ne() is not None
+
+
 class NamedEntity(Annotation):
-    cache = defaultdict(dict)
 
     def identical(self, other: 'NamedEntity'):
         return isinstance(other, NamedEntity) and self.kb_id == other.kb_id
@@ -76,4 +90,4 @@ class NamedEntity(Annotation):
     @classmethod
     def make(cls, doc: Doc, idx, *args, **kwargs) -> 'NamedEntity':
         start, end, label = doc._._nes[idx]
-        return super().make(doc, idx, start, end, label, f"{label}/{str(doc.text[start:end])}")
+        return super().make(doc, idx, start, end, label, kb_id=f"{label}/{str(doc._.char_span_relaxed(start, end))}")

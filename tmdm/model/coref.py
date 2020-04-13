@@ -1,7 +1,7 @@
-from typing import List, Iterable
+from typing import List, Iterable, Optional
 from dynaconf import settings
 from fastcache import clru_cache
-from spacy.tokens import Doc, Token
+from spacy.tokens import Doc, Token, Span
 from loguru import logger
 
 from tmdm.model.extensions import Annotation, extend
@@ -24,7 +24,7 @@ def corefs(self: Token):
     logger.debug(f"Retrieving coref annotations for token '{self}'")
     logger.debug(f"Result is: '{self._._corefs}'")
     return [
-        Coreference.make(i, self.doc) for i in self._._corefs
+        Coreference.make(self.doc, i) for i in self._._corefs
     ]
 
 
@@ -42,6 +42,21 @@ def set_corefs(self, corefs):
                 annotations.append(idx)
 
     self._._corefs = corefs
+
+
+@extend(Span)
+def get_coref(self: Span) -> Optional['Coreference']:
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    return next(
+        (Coreference.make(self.doc, i) for i, (s, e, _) in enumerate(self.doc._._corefs) if start == s and end == e),
+        None
+    )
+
+
+@extend(Span)
+def is_coref(self: Span) -> bool:
+    return self._.get_coref() is not None
 
 
 @extend(Doc, 'property', create_attribute=True, default=[], setter=set_corefs)
@@ -72,7 +87,7 @@ def _l2c(label: str) -> int:
 
 @clru_cache(maxsize=100000)
 def _cluster(doc: Doc, cluster_id: int) -> Iterable['Coreference']:
-    return (Coreference.make(doc, i) for i, (_, _, label) in enumerate(doc._._corefs) if _l2c(label) == cluster_id)
+    return [Coreference.make(doc, i) for i, (_, _, label) in enumerate(doc._._corefs) if _l2c(label) == cluster_id]
 
 
 class Coreference(Annotation):
