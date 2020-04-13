@@ -11,6 +11,8 @@ from loguru import logger
 
 from typing import Tuple
 
+from tmdm.classes import EntitiesRelationshipsAnnotation
+
 ACCEPTED_FORMATS = ('mpk', 'json', 'pkl')
 
 
@@ -134,6 +136,20 @@ def bio_generator(tags: List[str], sep='-') -> Tuple[Tuple[int, int], str]:
                 if eos_or_eot:
                     # U/L always preceded by B.
                     yield (start, i + 1), category
+
+
+def entities_relations_from_by_verb(by_verb: List[List[Tuple[int, int, str]]]) -> EntitiesRelationshipsAnnotation:
+    entities = []
+    relations = []
+    for verb_annotations in by_verb:
+        verb = next((start, end, label) for start, end, label in verb_annotations if label == 'V' or label == 'VERB')
+        arg_annotations = ((s, e, l) for s, e, l in verb_annotations if not (l == 'V' or l == 'VERB'))
+        entities.append(verb)
+        verb_idx = len(entities) - 1
+        for arg_annotation in arg_annotations:
+            entities.append(arg_annotation)
+            relations.append((verb_idx, len(entities) - 1, arg_annotation[2]))
+    return entities, relations
 
 
 def merge_two_annotations(first: List[List[str]], second: List[List[str]],

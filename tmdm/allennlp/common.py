@@ -5,7 +5,6 @@ from loguru import logger
 from overrides import overrides
 from spacy.tokens import Doc
 from typing import Iterable, Callable, Any, Dict
-
 from tmdm.classes import OffsetAnnotation, Provider
 
 
@@ -45,13 +44,13 @@ class OnlinePredictor(Provider):
         return self.predictor._dataset_reader. \
             text_to_instance([[word.text for word in sentence] for sentence in doc.sents])
 
-    def _converter(self):
-        ...
+    def _converter(self, doc, results):
+        raise NotImplemented
 
     @overrides
     def annotate_batch(self, docs: Iterable[Doc]):
         logger.trace("Entering annotate batch...")
-        instances = [self.preprocess(doc) for doc in docs]
+        instances = [self.preprocess(doc) for doc in docs] if self.preprocess else docs
         try:
             result = self.predictor.predict_batch_instance(instances)
         except Exception as e:
@@ -59,5 +58,6 @@ class OnlinePredictor(Provider):
             return [[] for _ in docs]
         result_iterator = iter(result)
         return [
-            self.converter(doc, self.getter(next(result_iterator)) if self.getter else next(result_iterator)) for doc in docs
+            self.converter(doc, self.getter(next(result_iterator)) if self.getter else next(result_iterator))
+            for doc in docs
         ]
