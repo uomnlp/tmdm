@@ -1,15 +1,20 @@
 import string
+
+from spacy.tokens.doc import Doc
+
 import tmdm
 from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
 from srsly import ujson as json
 from srsly import cloudpickle as pickle
-from typing import List, Iterable
+from typing import List, Iterable, Tuple
 
 from loguru import logger
 
 from typing import Tuple
+
+from tmdm.classes import OffsetAnnotation
 
 ACCEPTED_FORMATS = ('mpk', 'json', 'pkl')
 
@@ -201,3 +206,18 @@ def failsafe_combined_rule_sentence_segmenter(doc: Doc):
         return combined_rule_sentence_segmenter(doc)
     else:
         return doc
+
+
+def convert_clusters_to_offsets(doc: Doc, clusters: List[List[Tuple[int, int]]]) -> OffsetAnnotation:
+    result = []
+    for i, cluster in enumerate(clusters):
+        logger.trace(cluster)
+        logger.trace(doc)
+        for first_token, last_token in cluster:
+            last_token = last_token
+            logger.debug(f"doc[{first_token}:{last_token + 1}] = {doc[first_token:last_token + 1]}")
+            start = doc[first_token].idx
+            end = doc[last_token].idx + len(doc[last_token])
+            logger.debug(f"doc.char_span[{start}:{end}] = {doc._.char_span_relaxed(start, end)}")
+            result.append((start, end, f"CLUSTER-{i}"))
+    return result

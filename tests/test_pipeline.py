@@ -1,5 +1,5 @@
 # TODO test pipelines
-from tmdm.classes import Cached
+from tmdm.cached import Cached
 from tmdm.main import tmdm_pipeline, add_oie, add_coref
 
 testdata = [
@@ -8,9 +8,9 @@ testdata = [
 ]
 
 testdata2 = [
-    {"Cheesecake is great. It tastes so good!"},
-    {"id": "doc1", "text": "The cake is a lie. I like trains."}
+    {"id": "doc1", "text": "Cheesecake is great. It tastes so good!"}
 ]
+
 
 def test_oie_pipeline():
     nlp = tmdm_pipeline(getter=lambda d: (d['id'], d['text']), disable=['ner'])
@@ -22,7 +22,10 @@ def test_oie_pipeline():
 
 def test_coref_pipeline():
     nlp = tmdm_pipeline(getter=lambda d: (d['id'], d['text']), disable=['ner'])
-    provider = Cached(getter=lambda d: d['text'], path='tests/resources/test_oie_pipeline.json')
+    provider = Cached(getter=lambda d: d['text'], path='tests/resources/test_coref_pipeline.json',
+                      schema='list_of_clusters')
     add_coref(nlp, provider)
-    for doc in nlp.pipe(testdata):
+    for doc in nlp.pipe(testdata2):
         assert doc._.corefs
+        assert doc._.corefs[0].text == "Cheesecake"
+        assert doc._.corefs[1].text == "It"

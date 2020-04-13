@@ -5,7 +5,8 @@ from loguru import logger
 from scispacy.custom_tokenizer import combined_rule_tokenizer
 from spacy.language import Language
 
-from tmdm.classes import Provider, Cached
+from tmdm.classes import Provider
+from tmdm.cached import Cached
 from tmdm.pipe.coref import CorefPipe
 from tmdm.pipe.ne import NEPipe
 from tmdm.pipe.oie import OIEPipe
