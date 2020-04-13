@@ -56,14 +56,14 @@ def oies(self: Doc) -> List['Verb']:
     if not tags:
         logger.warning("No NEs extracted for this document (yet?).")
 
-    return [Verb.make(self.doc, i) for i, (_, _, label) in enumerate(tags) if label == 'VERB']
+    return [Verb.make(self.doc, i) for i, (_, _, label) in enumerate(tags) if label == 'VERB' or label == "V"]
 
 
 @clru_cache(maxsize=100000)
 def _v2a(self: Doc, idx) -> Iterable[int]:
     arg_ids = [(arg_idx, label) for verb_idx, arg_idx, label in self._._oies.relations if verb_idx == idx]
     key = itemgetter(1)
-    return (arg_idx for arg_idx, _ in sorted(arg_ids, key=key))
+    return [arg_idx for arg_idx, _ in sorted(arg_ids, key=key)]
 
 
 @clru_cache(maxsize=100000)
@@ -80,14 +80,21 @@ class Verb(Annotation):
     def continuous(self) -> bool:
         if self._continuous is None:
             all_spans = sorted([(self.start, self.end)] + [(a.start, a.end) for a in self.arguments])
+            logger.trace(f"all spans: {all_spans}")
             # explosion of pythonicism
             continuous = all(
                 end_previous == start_next for (_, end_previous), (start_next, _) in zip(all_spans, all_spans[1:])
             )
             self._continuous = continuous
+            logger.trace(f"continuous?: {continuous}")
             if self._continuous:
                 self._extended_span = self.doc[slice(all_spans[0][0], all_spans[-1][1])]
         return self._continuous
+
+    @property
+    def full_text(self):
+        span = [self.arguments[0]] + [self] + self.arguments[1:]
+        return " ".join(t.text for t in span)
 
     @property
     def extended_span(self) -> Optional[Span]:
@@ -112,7 +119,7 @@ class Verb(Annotation):
     @classmethod
     def make(cls, doc: Doc, idx: int, *args, **kwargs):
         start, end, label = doc._._oies.entities[idx]
-        assert label == "VERB"
+        assert label == "VERB" or label == 'V'
         verb = super().make(doc, idx, start, end, label)
         verb._arguments = _v2a(doc, idx)
         logger.debug(f"{verb} has arguments: {verb._arguments}")
@@ -170,7 +177,7 @@ class Argument(Annotation):
     def make(cls, doc: Doc, idx: int, *args, **kwargs):
         verb_ids = _a2v(doc, idx)
         start, end, label = doc._._oies.entities[idx]
-        assert label == "ARG"
+        assert "ARG" in label
         argument = super().make(doc, idx, start, end, label)
         argument._verbs = verb_ids
         return argument

@@ -146,6 +146,7 @@ class Annotation(Span):
 
             span = doc._.char_span_relaxed(start, end)
             span = cls(doc, span.start, span.end, label, *args, **kwargs)
+            span.idx = idx
             logger.trace(f"creating {span.fqn}")
             if doc._.id:
                 cls.cache[doc._.id][idx] = span

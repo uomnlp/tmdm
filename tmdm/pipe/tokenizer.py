@@ -20,5 +20,5 @@ class IDTokenizer:
             uuid = uuid4()
             text = data
         doc: Doc = self.tokenizer.__call__(text, *args, **kwargs)
-        doc._.id = uuid
+        doc._.id = str(uuid)
         return doc
