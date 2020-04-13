@@ -4,22 +4,24 @@ from allennlp.predictors import Predictor
 from loguru import logger
 from overrides import overrides
 from spacy.tokens import Doc
-from typing import Iterable, Callable, Any, Dict
+from typing import Iterable, Callable, Any, Dict, Optional
 from tmdm.classes import OffsetAnnotation, Provider
 
+default = object()
 
-class OnlinePredictor(Provider):
+
+class OnlineProvider(Provider):
     def __init__(
             self, task: str, path=None,
             getter: Callable[[Dict[str, Any]], Any] = None,
-            preprocessor: Callable[[Doc], Instance] = None,
+            preprocessor: Optional[Callable[[Doc], Instance]] = default,
             converter: Callable[[Doc, Any], OffsetAnnotation] = None
     ):
         super().__init__()
 
-        self.preprocess = preprocessor or self._preprocess
-        self.converter = converter or self._converter
-        self.getter = getter or None
+        self.preprocess = self._preprocess if preprocessor is default else preprocessor
+        self.converter = converter
+        self.getter = getter
         self.task = task
         self.path = path
         if self.path:
@@ -43,9 +45,6 @@ class OnlinePredictor(Provider):
     def _preprocess(self, doc: Doc):
         return self.predictor._dataset_reader. \
             text_to_instance([[word.text for word in sentence] for sentence in doc.sents])
-
-    def _converter(self, doc, results):
-        raise NotImplemented
 
     @overrides
     def annotate_batch(self, docs: Iterable[Doc]):

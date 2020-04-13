@@ -4,7 +4,7 @@ from loguru import logger
 from spacy.tokens import Doc
 from typing import List, Tuple
 
-from tmdm.allennlp.common import OnlinePredictor
+from tmdm.allennlp.common import OnlineProvider
 from tmdm.classes import OffsetAnnotation
 
 
@@ -23,8 +23,8 @@ def _convert_clusters(doc: Doc, clusters: List[List[Tuple[int, int]]]) -> Offset
     return result
 
 
-def get_coref_predictor(model_path: str):
+def get_coref_provider(model_path: str):
     from allennlp_models.coref.coref_model import CoreferenceResolver
     converter = _convert_clusters
     getter = itemgetter("clusters")
-    return OnlinePredictor(task='coreference-resolution', path=model_path, converter=converter, getter=getter)
+    return OnlineProvider(task='coreference-resolution', path=model_path, converter=converter, getter=getter)

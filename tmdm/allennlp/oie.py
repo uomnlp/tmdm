@@ -14,7 +14,7 @@ from overrides import overrides
 from spacy.tokens import Doc, Token
 from typing import List, Tuple, Dict, Any
 import numpy as np
-from tmdm.allennlp.common import OnlinePredictor
+from tmdm.allennlp.common import OnlineProvider
 from tmdm.classes import OffsetAnnotation
 from allennlp_models.syntax.srl import OpenIePredictor
 from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
@@ -113,9 +113,9 @@ def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> Offset
 #     return instances
 
 
-def get_oie_predictor(model_path: str):
+def get_oie_provider(model_path: str):
     from allennlp_models.coref.coref_model import CoreferenceResolver
     converter = _convert_annotations
     # getter = itemgetter("verbs")
-    p = OnlinePredictor(task='open-information-extraction', path=model_path, converter=converter)
+    p = OnlineProvider(task='open-information-extraction', path=model_path, converter=converter, preprocessor=None)
     return p
