@@ -20,7 +20,7 @@ class NEPipe:
 
     def __call__(self, doc: Doc):
         annotations = self.provider.annotate_document(doc)
-        doc._.corefs = annotations
+        doc._.nes = annotations
         return doc
 
     def pipe(self, stream: Iterable[Doc], batch_size: int):
