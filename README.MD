@@ -3,6 +3,10 @@ Text mining data model with integration of various formats, annotation libraries
 and whistles.
 
 ## Setup
+### Using pip
+```bash
+pip install git+https://github.com/schlevik/tmdm
+```
 ### From source
 ```bash
 git clone https://github.com/schlevik/tmdm

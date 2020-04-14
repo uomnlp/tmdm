@@ -20,8 +20,8 @@ with open("requirements.txt") as requirements_file:
         if '#egg' in line:
             name = line.split("#egg=")[-1]
             install_requirements.append(f"{name} @ {line}")
-    else:
-        install_requirements.append(line)
+        else:
+            install_requirements.append(line)
 
 # make pytest-runner a conditional requirement,
 # per: https://github.com/pytest-dev/pytest-runner#considerations
