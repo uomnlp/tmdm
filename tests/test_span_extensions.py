@@ -1,6 +1,3 @@
-import spacy
-from dynaconf import settings
-
 from tmdm.classes import ERTuple
 from tmdm.main import tmdm_pipeline
 
@@ -21,6 +18,15 @@ def test_get_coref_works():
     assert len(doc._.corefs) == 2
     assert doc[2:3]._.is_coref()
     assert doc[2:3]._.get_coref().coreferent(doc[4:5]._.get_coref())
+
+
+def test_contains_coref_works():
+    assert not doc[2:4]._.is_coref()
+    assert doc[2:4]._.has_corefs()
+    corefs = doc[2:4]._.get_corefs()
+    assert len(corefs) == 1
+    assert doc[2:4].text == 'cakes.'
+    assert corefs[0].text == 'cakes'
 
 
 def test_get_oie_works():
@@ -46,3 +52,28 @@ def test_coref_works_with_oie():
 def test_ne_works_with_coref():
     assert doc[2:3]._.is_ne()
     assert doc[2:3]._.get_ne()._.get_coref().coreferent(doc[4:5]._.get_coref())
+
+
+def test_contains_ne_works():
+    assert not doc[2:4]._.is_ne()
+    assert doc[2:4]._.has_nes()
+    nes = doc[2:4]._.get_nes()
+    assert len(nes) == 1
+    assert doc[2:4].text == 'cakes.'
+    assert nes[0].text == 'cakes'
+
+
+def test_contains_oie_works():
+    # sanity check
+    assert len(doc._._oies.entities) == 3
+    assert not doc[1:3]._.is_verb()
+    assert doc[1:3]._.has_verbs()
+    verbs = doc[1:3]._.get_verbs()
+    assert len(verbs) == 1
+    assert verbs[0].text == 'like'
+    assert not doc[:3]._.is_argument()
+    assert doc[:3]._.has_arguments()
+    arguments = doc[:3]._.get_arguments()
+    assert len(arguments) == 2
+    assert arguments[0].text == "I"
+    assert arguments[1].text == "cakes"
