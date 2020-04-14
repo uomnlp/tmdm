@@ -1,14 +1,12 @@
-dynaconf~=2.2.3
-scispacy~=0.2.4
-fastcache~=1.1.0
-overrides~=2.8.0
-srsly~=1.0.2
+dynaconf
+scispacy
+https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_lg-0.2.4.tar.gz#egg=en_core_sci_lg
+fastcache
+overrides
+srsly
 ujson~=1.35
-spacy~=2.2.4
-loguru~=0.4.1
+spacy>=2.2.4
+loguru
 
-typing~=3.7.4.1
+typing
 git+https://github.com/allenai/allennlp-models.git@a9be0f0236c1e6d16f17f5c0e27d35ad7f221a72
-transformers
-pytest~=5.4.1
-setuptools~=46.1.3

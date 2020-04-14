@@ -3,3 +3,5 @@ pytest-cov
 flaky
 sphinx
 sphinx-autodoc-typehints
+#pytest~=5.4.1
+#setuptools~=46.1.3
