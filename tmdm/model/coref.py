@@ -1,4 +1,4 @@
-from typing import List, Iterable, Optional
+from typing import List, Iterable, Optional, Union
 from dynaconf import settings
 from fastcache import clru_cache
 from spacy.tokens import Doc, Token, Span
@@ -109,7 +109,11 @@ class Coreference(Annotation):
     cluster_id: int
     cluster: List['Coreference']
 
-    def coreferent(self, other: 'Coreference') -> bool:
+    def coreferent(self, other: Union['Coreference', Token, Span]) -> bool:
+        if isinstance(other, Token):
+            other = other.doc[other.i:other.i + 1]
+        if isinstance(other, Span):
+            other = other._.get_coref()
         return isinstance(other, Coreference) and self.doc == other.doc and self.cluster_id == other.cluster_id
 
     @property
