@@ -7,7 +7,7 @@ from tmdm.classes import Provider
 
 def doc_gen(stream, nes_batch):
     for doc, nes in zip(stream, nes_batch):
-        doc._.corefs = nes
+        doc._.nes = nes
         yield doc
 
 
