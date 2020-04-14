@@ -1,6 +1,7 @@
 dynaconf
 scispacy
 https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_lg-0.2.4.tar.gz#egg=en_core_sci_lg
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm
 fastcache
 overrides
 srsly

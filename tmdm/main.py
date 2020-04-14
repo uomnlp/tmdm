@@ -22,7 +22,7 @@ def default_getter(d):
     return d['id'], d['abstract']
 
 
-def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, model='en', disable=None) -> Language:
+def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, model='en_core_web_sm', disable=None) -> Language:
     disable = disable or []
     nlp = spacy.load(model, disable=disable)
     logger.info("Pipeline has no getter configured. Document IDs will be generated automatically. "
