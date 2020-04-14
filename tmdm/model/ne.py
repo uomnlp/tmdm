@@ -82,6 +82,21 @@ def is_ne(self: Span) -> bool:
     return self._.get_ne() is not None
 
 
+@extend(Span)
+def get_nes(self: Span):
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    logger.trace(f"start,end: {start},{end}")
+    return [
+        NamedEntity.make(self.doc, i) for i, (s, e, _) in enumerate(self.doc._._nes) if start <= s and end >= e
+    ]
+
+
+@extend(Span)
+def has_nes(self: Span):
+    return not self._.get_nes() == []
+
+
 class NamedEntity(Annotation):
 
     def identical(self, other: 'NamedEntity'):
