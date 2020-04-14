@@ -150,6 +150,37 @@ def is_argument(self: Span) -> bool:
     return self._.get_argument() is not None
 
 
+@extend(Span)
+def get_verbs(self: Span):
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    logger.trace(f"start,end: {start},{end}")
+    return [
+        Verb.make(self.doc, i) for i, (s, e, l) in enumerate(self.doc._._oies.entities)
+        if start <= s and end >= e and l.startswith("V")
+    ]
+
+
+@extend(Span)
+def has_verbs(self: Span):
+    return not self._.get_verbs() == []
+
+
+@extend(Span)
+def get_arguments(self: Span) -> List['Argument']:
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    return [
+        Argument.make(self.doc, i) for i, (s, e, l) in enumerate(self.doc._._oies.entities)
+        if start <= s and end >= e and l.startswith("ARG")
+    ]
+
+
+@extend(Span)
+def has_arguments(self: Span) -> bool:
+    return not self._.get_arguments() == []
+
+
 class Argument(Annotation):
     _verbs: List[int]
 

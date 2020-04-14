@@ -59,6 +59,21 @@ def is_coref(self: Span) -> bool:
     return self._.get_coref() is not None
 
 
+@extend(Span)
+def get_corefs(self: Span):
+    start = self[0].idx
+    end = self[-1].idx + len(self[-1])
+    logger.trace(f"start,end: {start},{end}")
+    return [
+        Coreference.make(self.doc, i) for i, (s, e, _) in enumerate(self.doc._._corefs) if start <= s and end >= e
+    ]
+
+
+@extend(Span)
+def has_corefs(self: Span):
+    return not self._.get_corefs() == []
+
+
 @extend(Doc, 'property', create_attribute=True, default=[], setter=set_corefs)
 def corefs(self: Doc) -> List['Coreference']:
     """
