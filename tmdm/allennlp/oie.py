@@ -170,6 +170,7 @@ def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> Offset
 
 
 def get_oie_provider(model_path: str, extract_predicates: Callable[[Span], List[List[int]]] = None):
+    from allennlp_models.syntax.srl.srl_model import SemanticRoleLabeler
     extract_predicates = extract_predicates or _extract_predicates
     p = OnlineProvider(task='open-information-extraction', path=model_path, converter=_convert_annotations,
                        preprocessor=None)
