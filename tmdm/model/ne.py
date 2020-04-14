@@ -1,15 +1,11 @@
 from collections import defaultdict
 from typing import List, Optional
-from dynaconf import settings
 from spacy.tokens import Doc, Token, Span
 from loguru import logger
 
 from tmdm.model.extensions import Annotation, extend
 
-force = settings['force']
 
-
-# ATTRIBUTES
 @extend(Token, type='property', create_attribute=True, default=[])
 def nes(self: Token):
     """

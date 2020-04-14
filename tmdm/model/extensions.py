@@ -9,7 +9,7 @@ from spacy.tokens.doc import Doc
 from spacy.tokens.span import Span
 from spacy.tokens.token import Token
 
-force = settings['force']
+force = settings.get('force', False)
 
 
 def extend(target: Union[Doc, Token, Span], type='method', setter=None, default=None, create_attribute=True):

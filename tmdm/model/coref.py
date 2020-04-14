@@ -1,12 +1,9 @@
 from typing import List, Iterable, Optional, Union
-from dynaconf import settings
 from fastcache import clru_cache
 from spacy.tokens import Doc, Token, Span
 from loguru import logger
 
 from tmdm.model.extensions import Annotation, extend
-
-force = settings['force']
 
 
 # ATTRIBUTES
