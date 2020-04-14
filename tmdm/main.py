@@ -54,3 +54,6 @@ def add_coref(nlp, provider: Union[Provider, str], schema='list_of_tuples_bio_st
     if isinstance(provider, str):
         provider = Cached(path=provider, getter=lambda d: d['abstract'], schema=schema)
     nlp.add_pipe(CorefPipe(nlp.vocab, provider))
+
+
+__all__ = [change_getter, tmdm_pipeline, tmdm_scientific_pipeline, add_coref, add_ner, add_oie]
