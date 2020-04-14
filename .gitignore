@@ -5,3 +5,6 @@ __pycache__
 /tmdm/legacy.py
 /logs/
 /.in
+build/
+dist/
+tmdm.egg-info

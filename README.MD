@@ -3,11 +3,6 @@ Text mining data model with integration of various formats, annotation libraries
 and whistles.
 
 ## Setup
-### PyPi
-Execute
-```bash
-pip install tmdm
-```
 ### From source
 ```bash
 git clone https://github.com/schlevik/tmdm
