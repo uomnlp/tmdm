@@ -77,10 +77,11 @@ def post_process(results: List[ModelOutput], sent_tokens: List[Token], predicate
     final_results: JsonDict = {"verbs": []}
     predicate_mask = predicate_mask or [None for _ in pred_dict.values()]
     for tags, mask in zip(pred_dict.values(), predicate_mask):
-        join_mwp = my_join_mwp if mask else allennlp_join_mwp
-        # Join multi-word predicates
-        tags = join_mwp(tags, mask)
-
+        if mask:
+            # Join multi-word predicates
+            tags = my_join_mwp(tags, mask)
+        else:
+            tags = allennlp_join_mwp(tags)
         # Create description text
         # description = make_oie_string(sent_tokens, tags)
 
@@ -103,7 +104,7 @@ def _extract_predicates_simple(sent: Span) -> List[List[int]]:
 
 @Predictor.register("open-information-extraction", exist_ok=True)
 class CustomOpenIEPredictor(OpenIePredictor):
-    extract_predicates: Callable[[Span], List[List[int]]]
+    simple_predicates: bool
 
     def predict_batch_instance(self, instances: List[Instance]) -> List[JsonDict]:
         # noinspection PyTypeChecker
@@ -118,8 +119,10 @@ class CustomOpenIEPredictor(OpenIePredictor):
             if d:
                 logger.trace(f"Doc: {d}")
                 for sent_nr, sentence in enumerate(d.sents):
-                    masks = self.extract_predicates(sentence)
-
+                    if self.simple_predicates:
+                        masks = _extract_predicates_simple(sentence)
+                    else:
+                        masks = _extract_predicates(sentence)
                     masks = [m for m in masks if sum(m) > 0]
                     instances[d].append([self._dataset_reader.text_to_instance(sentence, mask) for mask in masks])
                     all_masks.extend(masks)
@@ -150,7 +153,11 @@ class CustomOpenIEPredictor(OpenIePredictor):
                 for i, sentence in enumerate(per_predicate):
                     r = [next(results_iterator) for _ in sentence]
                     m = [next(masks_iter) for _ in sentence]
-                    per_doc.append(post_process(r, doc_sents[i], m)['verbs'])
+                    if self.simple_predicates:
+                        per_doc.append(post_process(r, doc_sents[i])['verbs'])
+                    else:
+                        per_doc.append(post_process(r, doc_sents[i], m)['verbs'])
+
                 gathered_results.append(per_doc)
             else:
                 gathered_results.append([])
@@ -174,10 +181,9 @@ def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> Offset
     return entities_relations_from_by_verb(result)
 
 
-def get_oie_provider(model_path: str, extract_predicates: Callable[[Span], List[List[int]]] = None, cuda=-1):
+def get_oie_provider(model_path: str, simple_predicates: bool = False, cuda=-1):
     from allennlp_models.syntax.srl.srl_model import SemanticRoleLabeler
-    extract_predicates = extract_predicates or _extract_predicates
     p = OnlineProvider(task='open-information-extraction', path=model_path, converter=_convert_annotations,
                        preprocessor=None, cuda=cuda)
-    p.predictor.extract_predicates = extract_predicates
+    p.predictor.simple_predicates = simple_predicates
     return p

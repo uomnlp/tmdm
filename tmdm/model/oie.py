@@ -62,7 +62,7 @@ def oies(self: Doc) -> List['Verb']:
 @clru_cache(maxsize=100000)
 def _v2a(self: Doc, idx) -> Iterable[int]:
     arg_ids = [(arg_idx, label) for verb_idx, arg_idx, label in self._._oies.relations if verb_idx == idx]
-    key = itemgetter(1)
+    key = itemgetter(0)
     return [arg_idx for arg_idx, _ in sorted(arg_ids, key=key)]
 
 
@@ -106,6 +106,10 @@ class Verb(Annotation):
 
     def argument(self, order):
         return Argument.make(self.doc, self._arguments[order])
+
+    @property
+    def core_arguments(self):
+        return [arg for arg in self.arguments if "M" not in arg.order]
 
     @property
     def arguments(self) -> List['Argument']:
@@ -186,7 +190,7 @@ def has_arguments(self: Span) -> bool:
 
 class Argument(Annotation):
     _verbs: List[int]
-    order: int
+    order: str
 
     @property
     def verbs(self) -> List[Verb]:
@@ -199,4 +203,5 @@ class Argument(Annotation):
         assert "ARG" in label
         argument = super().make(doc, idx, start, end, label)
         argument._verbs = verb_ids
+        argument.order = label
         return argument
