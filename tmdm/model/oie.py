@@ -93,7 +93,10 @@ class Verb(Annotation):
 
     @property
     def full_text(self):
-        span = [self.arguments[0]] + [self] + self.arguments[1:]
+        if self.arguments:
+            span = [self.arguments[0]] + [self] + self.arguments[1:]
+        else:
+            span = [self]
         return " ".join(t.text for t in span)
 
     @property
@@ -183,6 +186,7 @@ def has_arguments(self: Span) -> bool:
 
 class Argument(Annotation):
     _verbs: List[int]
+    order: int
 
     @property
     def verbs(self) -> List[Verb]:

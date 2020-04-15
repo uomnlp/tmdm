@@ -17,3 +17,5 @@ def test_join_mwp_sets_new_arg_boundries():
     tags = "B-ARG0 B-V B-ARG1 I-ARG1 O O".split()
     mask = [0, 1, 1, 0, 0, 0]
     assert join_mwp(tags,mask) == "B-ARG0 B-V I-V B-ARG1 O O".split()
+
+

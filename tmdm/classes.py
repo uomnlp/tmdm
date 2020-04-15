@@ -30,6 +30,6 @@ class Provider(ABC):
     def annotate_document(self, doc: Doc) -> OffsetAnnotation:
         ...
 
-    def annotate_batch(self, docs: Iterable[Doc]):
+    def annotate_batch(self, docs: List[Doc]) -> List[OffsetAnnotation]:
         # TODO if something fails, need to convert to list
-        return (self.annotate_document(doc) for doc in docs)
+        return [self.annotate_document(doc) for doc in docs]
