@@ -3,6 +3,7 @@ from allennlp.common.util import sanitize
 from allennlp.data import Instance
 from allennlp.predictors import Predictor
 from allennlp_models.syntax.srl.openie_predictor import sanitize_label, consolidate_predictions
+from allennlp_models.syntax.srl.openie_predictor import join_mwp as allennlp_join_mwp
 from collections import defaultdict
 from loguru import logger
 from spacy.tokens import Doc, Token, Span
@@ -18,30 +19,7 @@ from tmdm.util import entities_relations_from_by_verb
 ModelOutput = Dict[str, np.ndarray]
 
 
-# def join_mwp(tags: List[str]) -> List[str]:
-#     """
-#     Join multi-word predicates to a single
-#     predicate ('V') token.
-#     """
-#     ret = []
-#     verb_flag = False
-#     for tag in tags:
-#         if "V" in tag:
-#             # Create a continuous 'V' BIO span
-#             prefix, _ = tag.split("-", 1)
-#             if verb_flag:
-#                 # Continue a verb label across the different predicate parts
-#                 prefix = "I"
-#             ret.append(f"{prefix}-V")
-#             verb_flag = True
-#         else:
-#             ret.append(tag)
-#             verb_flag = False
-#
-#     return ret
-
-
-def join_mwp(tags: List[str], mask: List[int]):
+def my_join_mwp(tags: List[str], mask: List[int]):
     assert len(tags) == len(mask), f"len(tags) != len(mask) ({len(tags)} != {len(mask)})"
     # assuming that the predicate is continuous
     predicate_start = next(i for i, is_predicate in enumerate(mask) if is_predicate)
@@ -90,15 +68,16 @@ def _extract_predicates(sent):
     return masks
 
 
-def post_process(results: List[ModelOutput], sent_tokens: List[Token], predicate_mask: List[List[int]]):
+def post_process(results: List[ModelOutput], sent_tokens: List[Token], predicate_mask: List[List[int]] = None):
     outputs: List[List[str]] = [[sanitize_label(label) for label in result['tags']] for result in results]
     logger.trace(f"Outputs: {outputs}")
     pred_dict = consolidate_predictions(outputs, sent_tokens)
     logger.trace(f"Consolidated predictions: {pred_dict}")
     # Build and return output dictionary
     final_results: JsonDict = {"verbs": []}
-
+    predicate_mask = predicate_mask or [None for _ in pred_dict.values()]
     for tags, mask in zip(pred_dict.values(), predicate_mask):
+        join_mwp = my_join_mwp if mask else allennlp_join_mwp
         # Join multi-word predicates
         tags = join_mwp(tags, mask)
 
