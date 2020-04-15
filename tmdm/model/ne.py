@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import List, Optional
 from spacy.tokens import Doc, Token, Span
 from loguru import logger
@@ -21,7 +20,7 @@ def nes(self: Token):
     logger.debug(f"Retrieving ne annotations for token '{self}'")
     logger.debug(f"Result is: '{self._._nes}'")
     return [
-        NamedEntity.make(i, self.doc) for i in self._._nes
+        NamedEntity.make(self.doc, i) for i in self._._nes
     ]
 
 
