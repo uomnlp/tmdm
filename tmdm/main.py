@@ -11,7 +11,7 @@ from tmdm.pipe.coref import CorefPipe
 from tmdm.pipe.ne import NEPipe
 from tmdm.pipe.oie import OIEPipe
 from tmdm.pipe.tokenizer import IDTokenizer
-from tmdm.util import failsafe_combined_rule_sentence_segmenter
+from tmdm.util import failsafe_combined_rule_sentence_segmenter, OneSentSentencizer
 
 
 def change_getter(nlp, getter=Callable[[Any, ], Tuple[str, str]]):
@@ -22,7 +22,13 @@ def default_getter(d):
     return d['id'], d['abstract']
 
 
-def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, model='en_core_web_sm', disable=None) -> Language:
+def default_one_sent_getter(d):
+    uid, data = d
+    return uid, data
+
+
+def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, model='en_core_web_sm',
+                  disable=None) -> Language:
     disable = disable or []
     nlp = spacy.load(model, disable=disable)
     logger.info("Pipeline has no getter configured. Document IDs will be generated automatically. "
@@ -34,7 +40,15 @@ def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, m
 def tmdm_scientific_pipeline(getter: Callable[[Any, ], Tuple[str, str]] = default_getter, model="en_core_sci_lg"):
     nlp = spacy.load(model, disable=['ner', 'parser'])
     nlp.tokenizer = IDTokenizer(combined_rule_tokenizer(nlp), getter=getter)
-    nlp.add_pipe(failsafe_combined_rule_sentence_segmenter)
+    nlp.add_pipe(failsafe_combined_rule_sentence_segmenter())
+    return nlp
+
+
+def tmdm_one_sent_pipeline(getter: Callable[[Any, ], Tuple[str, str]] = default_one_sent_getter,
+                           model="en_core_sci_lg"):
+    nlp = spacy.load(model, disable=['ner', 'parser'])
+    nlp.tokenizer = IDTokenizer(combined_rule_tokenizer(nlp), getter=getter)
+    nlp.add_pipe(OneSentSentencizer())
     return nlp
 
 

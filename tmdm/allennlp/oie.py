@@ -6,6 +6,7 @@ from allennlp_models.syntax.srl.openie_predictor import sanitize_label, consolid
 from allennlp_models.syntax.srl.openie_predictor import join_mwp as allennlp_join_mwp
 from collections import defaultdict
 from loguru import logger
+from math import ceil
 from spacy.tokens import Doc, Token, Span
 from typing import List, Dict, Callable
 import numpy as np
@@ -128,12 +129,38 @@ class CustomOpenIEPredictor(OpenIePredictor):
                     all_masks.extend(masks)
             else:
                 instances[d].append([])
-        logger.trace(f"Instances: {instances}")
         # tokens.append(sentence)
         # try:
         flat_instances = [inst for _, sents in instances.items() for sent in sents for inst in sent]
+        logger.info("Before predict...")
         if flat_instances:
-            results = self._model.forward_on_instances(flat_instances)
+            try:
+                results = self._model.forward_on_instances(flat_instances)
+            except Exception as e:
+                if "memory" in str(e).lower():
+                    current_batch_size = ceil(len(flat_instances) / 2)
+                    logger.warning("Too big! Trying smaller batches.")
+                    logger.warning(f"new batch size: {current_batch_size}")
+                    failed = True
+                    while failed:
+                        results = []
+                        try:
+                            results.extend(
+                                self._model.forward_on_instances(flat_instances[i:i + current_batch_size]) for i in
+                                range(0, len(flat_instances), current_batch_size)
+                            )
+                            results = [l for ll in results for l in ll]
+                            failed = False
+                        except Exception as e:
+                            if "memory" in str(e).lower():
+                                logger.warning("Still too big! Trying even smaller batches.")
+                                current_batch_size = ceil(current_batch_size / 2)
+                                logger.warning(f"new batch size: {current_batch_size}")
+                            else:
+                                raise e
+
+                else:
+                    raise e
         else:
             results = [list() for _ in instances.keys()]
             logger.trace(f"Whole batch is empty... {results}")

@@ -1,11 +1,10 @@
 from allennlp.data import Instance
 from allennlp.models import load_archive
 from allennlp.predictors import Predictor
-from itertools import tee
 from loguru import logger
 from overrides import overrides
 from spacy.tokens import Doc
-from typing import Iterable, Callable, Any, Dict, Optional, List
+from typing import Callable, Any, Dict, Optional, List
 from tmdm.classes import OffsetAnnotation, Provider
 
 default = object()

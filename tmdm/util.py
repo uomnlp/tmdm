@@ -1,14 +1,12 @@
 import string
 
-from spacy.tokens.doc import Doc
-
 import tmdm
 from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
 from srsly import ujson as json
 from srsly import cloudpickle as pickle
-from typing import List, Iterable, Tuple
+from typing import List, Iterable
 
 from loguru import logger
 
@@ -205,6 +203,17 @@ def failsafe_combined_rule_sentence_segmenter(doc: Doc):
     if doc:
         return combined_rule_sentence_segmenter(doc)
     else:
+        return doc
+
+
+class OneSentSentencizer:
+    name = "one-sent-sentencizer"
+
+    def __call__(self, doc: Doc):
+        for i in range(len(doc)):
+            doc[i].is_sent_start = False
+        if doc:
+            doc[0].is_sent_start = True
         return doc
 
 

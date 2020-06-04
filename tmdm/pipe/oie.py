@@ -7,8 +7,6 @@ from tmdm.classes import Provider
 
 
 def oies_gen(stream, nes_batch):
-    print(f"here i am")
-    print(f"stream: {stream}")
     for doc, oies in zip(stream, nes_batch):
         doc._.oies = oies
         yield doc
