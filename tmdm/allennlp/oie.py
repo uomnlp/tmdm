@@ -8,7 +8,7 @@ from collections import defaultdict
 from loguru import logger
 from math import ceil
 from spacy.tokens import Doc, Token, Span
-from typing import List, Dict, Callable
+from typing import List, Dict
 import numpy as np
 from tmdm.allennlp.common import OnlineProvider
 from tmdm.classes import OffsetAnnotation
@@ -132,7 +132,6 @@ class CustomOpenIEPredictor(OpenIePredictor):
         # tokens.append(sentence)
         # try:
         flat_instances = [inst for _, sents in instances.items() for sent in sents for inst in sent]
-        logger.info("Before predict...")
         if flat_instances:
             try:
                 results = self._model.forward_on_instances(flat_instances)
