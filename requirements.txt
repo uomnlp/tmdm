@@ -1,6 +1,8 @@
 dynaconf>=2.2.3
 scispacy>=0.2.4
-git+https://github.com/allenai/allennlp-models.git@a9be0f0236c1e6d16f17f5c0e27d35ad7f221a72#egg=allennlp_models
+allennlp==1.0.0 
+allennlp-models==1.0.0
+#git+https://github.com/allenai/allennlp-models.git@a9be0f0236c1e6d16f17f5c0e27d35ad7f221a72#egg=allennlp_models
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm
 https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_lg-0.2.4.tar.gz#egg=en_core_sci_lg
 fastcache
