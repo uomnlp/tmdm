@@ -6,7 +6,7 @@ from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
 from spacy.tokens.doc import Doc
 
 from tmdm import util
-from tmdm.classes import Provider, OffsetAnnotation
+from tmdm.classes import Provider, CharOffsetAnnotation
 from tmdm.util import convert_clusters_to_offsets, get_offsets, get_offsets_from_sentences
 
 OFFSETS = object()
@@ -44,7 +44,7 @@ class Cached(Provider):
         # TODO: Pubmed
     }
 
-    def __init__(self, schema: Union[str, Callable[[Doc, Any], OffsetAnnotation]] = None, getter=None,
+    def __init__(self, schema: Union[str, Callable[[Doc, Any], CharOffsetAnnotation]] = None, getter=None,
                  path: str = None):
         self.cache = {}
         self.loaded = False
@@ -72,7 +72,7 @@ class Cached(Provider):
         self.loaded = True
 
     @overrides
-    def annotate_document(self, doc: Doc) -> OffsetAnnotation:
+    def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
         if not self.loaded:
             raise ValueError("You forgot to load the cache!")
         annotations = self.cache.get(doc._.id, None)

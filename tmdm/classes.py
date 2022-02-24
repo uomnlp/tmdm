@@ -9,7 +9,7 @@ ERTuple = namedtuple("ERTuple", ["entities", "relations"])
 # Typed Entities and Relationships
 EntitiesAnnotation = List[Tuple[int, int, str]]
 EntitiesRelationshipsAnnotation = Tuple[EntitiesAnnotation, List[Tuple[int, int, str]]]
-OffsetAnnotation = Union[EntitiesAnnotation, EntitiesRelationshipsAnnotation]
+CharOffsetAnnotation = Union[EntitiesAnnotation, EntitiesRelationshipsAnnotation]
 
 
 class Provider(ABC):
@@ -27,9 +27,9 @@ class Provider(ABC):
         ...
 
     @abstractmethod
-    def annotate_document(self, doc: Doc) -> OffsetAnnotation:
+    def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
         ...
 
-    def annotate_batch(self, docs: List[Doc]) -> List[OffsetAnnotation]:
+    def annotate_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         # TODO if something fails, need to convert to list
         return [self.annotate_document(doc) for doc in docs]

@@ -40,7 +40,7 @@ def tmdm_pipeline(getter: Optional[Callable[[Any, ], Tuple[str, str]]] = None, m
 def tmdm_scientific_pipeline(getter: Callable[[Any, ], Tuple[str, str]] = default_getter, model="en_core_sci_lg"):
     nlp = spacy.load(model, disable=['ner', 'parser'])
     nlp.tokenizer = IDTokenizer(combined_rule_tokenizer(nlp), getter=getter)
-    nlp.add_pipe(failsafe_combined_rule_sentence_segmenter())
+    nlp.add_pipe(failsafe_combined_rule_sentence_segmenter)
     return nlp
 
 

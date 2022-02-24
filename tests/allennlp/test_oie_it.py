@@ -10,4 +10,4 @@ add_oie(nlp, get_oie_provider("https://storage.googleapis.com/allennlp-public-mo
 def test_oie_pipeline_works_with_empty_docs():
     empty_doc = {"id": "empty", "abstract": ""}
     doc = nlp(empty_doc)
-    assert doc._.oies == ([], [])
+    assert doc._.oies == []
