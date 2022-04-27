@@ -17,7 +17,9 @@ class OnlineProvider(Provider):
     pipeline: Pipeline
 
     def __init__(
-            self, task: str, path_or_name=None,
+            self,
+            task: str,
+            path_or_name=None,
             path_or_name_tokenizer=None,
             getter: Callable[[Dict[str, Any]], Any] = None,
             preprocessor: Optional[Callable[[Doc], Instance]] = default,
