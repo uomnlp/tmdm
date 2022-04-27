@@ -24,12 +24,13 @@ def nes(self: Token):
     ]
 
 
-def set_nes(self, nes):
+def set_nes(self: Doc, nes):
     # TODO if re-setting the NES, need to unload the previous token annotations
     # normalise and align, should be either in a pipeline element or a util function or something like that
     if self._._nes:
-        logger.error("Cannot re-set tokens (yet)!")
-        raise NotImplementedError("Cannot re-set tokens (yet)!")
+        # logger.error("Cannot re-set tokens (yet)!")
+        # raise NotImplementedError("Cannot re-set tokens (yet)!")
+        self._._nes = []
     for idx, (start, end, label) in enumerate(nes):
         logger.trace(nes)
         for token in self._.char_span_relaxed(start, end):
@@ -38,6 +39,9 @@ def set_nes(self, nes):
                 annotations.append(idx)
 
     self._._nes = nes
+
+
+Span.set_extension('ne_meta', default=None, force=True)
 
 
 @extend(Doc, 'property', create_attribute=True, default=[], setter=set_nes)
@@ -100,4 +104,11 @@ class NamedEntity(Annotation):
     @classmethod
     def make(cls, doc: Doc, idx, *args, **kwargs) -> 'NamedEntity':
         start, end, label = doc._._nes[idx]
-        return super().make(doc, idx, start, end, label, kb_id=f"{label}/{str(doc._.char_span_relaxed(start, end))}")
+        if isinstance(label, str):
+            span = super().make(doc, idx, start, end, label, kb_id=f"{label}/{str(doc._.char_span_relaxed(start, end))}")
+            span._.ne_meta = {}
+            return span
+        elif isinstance(label, dict):
+            span = super().make(doc, idx, start, end, label=label['label'])
+            span._.ne_meta = label
+            return span

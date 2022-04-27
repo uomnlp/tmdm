@@ -1,5 +1,7 @@
 import string
 
+import handystuff.loaders
+
 import tmdm
 from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
@@ -14,7 +16,7 @@ from typing import Tuple
 
 from tmdm.classes import CharOffsetAnnotation
 
-ACCEPTED_FORMATS = ('mpk', 'json', 'pkl')
+ACCEPTED_FORMATS = ('mpk', 'json', 'pkl', 'jsonl')
 
 
 def _check_fmt(path, format=None):
@@ -47,6 +49,8 @@ def load_file(path: str, format: str = None):
     if format == 'mpk':
         with open(path, "rb") as f:
             return msgpack.load(f)
+    elif format == 'jsonl':
+        return handystuff.loaders.load_jsonl(path)
     elif format == "json":
         with open(path, 'r') as f:
             return json.load(f)

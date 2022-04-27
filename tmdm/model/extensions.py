@@ -81,7 +81,10 @@ def char_span_relaxed(self: Doc, start: int, end: int):
     span = self.char_span(start, end)
     if not span:
         token_map = self._.token_map
-        span = self[token_map[start]:token_map[end] + 1]
+        try:
+            span = self[token_map[start]:token_map[end] + 1]
+        except IndexError:
+            span = self[token_map[start]:]
     return span
 
 
@@ -152,6 +155,7 @@ class Annotation(Span):
                 cls.cache[cls][doc._.id][idx] = span
             else:
                 logger.trace('Id not set for doc, omit caching...')
+                return span
         else:
             logger.trace(f"{cls.cache[cls][doc._.id][idx]} is in cache!")
         return cls.cache[cls][doc._.id][idx]

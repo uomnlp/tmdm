@@ -15,4 +15,4 @@ from tmdm.model.extensions import Annotation
 from tmdm.model.coref import Coreference
 from tmdm.model.oie import Verb, Argument
 from tmdm.model.ne import NamedEntity
-from tmdm.main import *
+from tmdm.main import tmdm_pipeline
