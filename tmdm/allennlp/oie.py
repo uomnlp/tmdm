@@ -2,18 +2,18 @@ from allennlp.common import JsonDict
 from allennlp.common.util import sanitize
 from allennlp.data import Instance
 from allennlp.predictors import Predictor
-from allennlp_models.syntax.srl.openie_predictor import sanitize_label, consolidate_predictions
-from allennlp_models.syntax.srl.openie_predictor import join_mwp as allennlp_join_mwp
 from collections import defaultdict
+
+from allennlp_models.structured_prediction.predictors.openie import sanitize_label, consolidate_predictions, join_mwp, OpenIePredictor
 from loguru import logger
 from math import ceil
+
+from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
 from spacy.tokens import Doc, Token, Span
 from typing import List, Dict
 import numpy as np
 from tmdm.allennlp.common import OnlineProvider
-from tmdm.classes import OffsetAnnotation
-from allennlp_models.syntax.srl import OpenIePredictor
-from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
+from tmdm.classes import CharOffsetAnnotation
 
 from tmdm.util import entities_relations_from_by_verb
 
@@ -82,7 +82,7 @@ def post_process(results: List[ModelOutput], sent_tokens: List[Token], predicate
             # Join multi-word predicates
             tags = my_join_mwp(tags, mask)
         else:
-            tags = allennlp_join_mwp(tags)
+            tags = join_mwp(tags)
         # Create description text
         # description = make_oie_string(sent_tokens, tags)
 
@@ -190,7 +190,7 @@ class CustomOpenIEPredictor(OpenIePredictor):
         return gathered_results
 
 
-def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> OffsetAnnotation:
+def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> CharOffsetAnnotation:
     # verbs: Per sent, per verb per token
     result = []
     for sent, sent_annotations in zip(doc.sents, annotations):
@@ -208,7 +208,7 @@ def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> Offset
 
 
 def get_oie_provider(model_path: str, simple_predicates: bool = False, cuda=-1):
-    from allennlp_models.syntax.srl.srl_model import SemanticRoleLabeler
+    from allennlp_models.structured_prediction import SemanticRoleLabeler
     p = OnlineProvider(task='open-information-extraction', path=model_path, converter=_convert_annotations,
                        preprocessor=None, cuda=cuda)
     p.predictor.simple_predicates = simple_predicates

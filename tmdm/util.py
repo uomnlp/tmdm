@@ -12,7 +12,7 @@ from loguru import logger
 
 from typing import Tuple
 
-from tmdm.classes import OffsetAnnotation
+from tmdm.classes import CharOffsetAnnotation
 
 ACCEPTED_FORMATS = ('mpk', 'json', 'pkl')
 
@@ -217,7 +217,7 @@ class OneSentSentencizer:
         return doc
 
 
-def convert_clusters_to_offsets(doc: Doc, clusters: List[List[Tuple[int, int]]]) -> OffsetAnnotation:
+def convert_clusters_to_offsets(doc: Doc, clusters: List[List[Tuple[int, int]]]) -> CharOffsetAnnotation:
     result = []
     for i, cluster in enumerate(clusters):
         logger.trace(cluster)

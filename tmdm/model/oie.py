@@ -54,7 +54,7 @@ def set_oies(self: Doc, oies):
 def oies(self: Doc) -> List['Verb']:
     tags = self._._oies[0]
     if not tags:
-        logger.warning("No NEs extracted for this document (yet?).")
+        logger.warning(f"No OIEs extracted for this document (yet?): {tags}.")
 
     return [Verb.make(self.doc, i) for i, (_, _, label) in enumerate(tags) if label == 'VERB' or label == "V"]
 

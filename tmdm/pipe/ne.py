@@ -1,4 +1,6 @@
 import itertools
+
+from loguru import logger
 from spacy.tokens import Doc
 from typing import Iterable
 
@@ -20,6 +22,7 @@ class NEPipe:
 
     def __call__(self, doc: Doc):
         annotations = self.provider.annotate_document(doc)
+        logger.info(annotations)
         doc._.nes = annotations
         return doc
 
