@@ -16,6 +16,7 @@ from tmdm.allennlp.common import OnlineProvider
 from tmdm.classes import CharOffsetAnnotation
 
 from tmdm.util import entities_relations_from_by_verb
+from tmdm.pipe.pipe import PipeElement
 
 ModelOutput = Dict[str, np.ndarray]
 
@@ -208,8 +209,18 @@ def _convert_annotations(doc: Doc, annotations: List[List[List[str]]]) -> CharOf
 
 
 def get_oie_provider(model_path: str, simple_predicates: bool = False, cuda=-1):
-    from allennlp_models.structured_prediction import SemanticRoleLabeler
+    import allennlp_models.tagging
     p = OnlineProvider(task='open-information-extraction', path=model_path, converter=_convert_annotations,
                        preprocessor=None, cuda=cuda)
     p.predictor.simple_predicates = simple_predicates
     return p
+
+
+def get_oie_pipe(model_path: str = 'https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz',
+                 simple_predicates: bool = False, cuda=-1):
+    import allennlp_models.tagging
+    # converter = convert_clusters_to_offsets
+    # getter = itemgetter("clusters")
+    p = OnlineProvider(task='open-information-extraction', path=model_path, converter=_convert_annotations, preprocessor=None, cuda=cuda)
+    p.predictor.simple_predicates = simple_predicates
+    return PipeElement(name='open-ie', field='oies', provider=p)
