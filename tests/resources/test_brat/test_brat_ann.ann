@@ -1,4 +1,45 @@
-T1	Person 2 13	John Copson
-T2	Person 61 74	Joseph Copson
-T3	Person 113 121	Mary Ann
-T4	Person 15 19	John
+T1	Date 69 79	April 2015
+T2	Location 93 101	Spratton
+#1	AnnotatorNotes T2	https://en.wikipedia.org/wiki/Spratton
+T3	Misc 145 159	Victoria Cross
+#2	AnnotatorNotes T3	https://en.wikipedia.org/wiki/Victoria_Cross
+T4	Date 187 202	26th April 1915
+T5	Person 210 240	Lt William Rhodes-Moorhouse VC
+#3	AnnotatorNotes T5	https://en.wikipedia.org/wiki/William_Barnard_Rhodes-Moorhouse
+T6	Misc 277 292	First World War
+#4	AnnotatorNotes T6	https://en.wikipedia.org/wiki/World_War_I
+T7	Date 694 698	2019
+T8	Organisation 731 746	RAF Lossiemouth
+#5	AnnotatorNotes T8	https://en.wikipedia.org/wiki/RAF_Lossiemouth
+T9	Organisation 712 725	No 2 Squadron
+#6	AnnotatorNotes T9	https://en.wikipedia.org/wiki/No._2_Squadron_RAF
+T10	Location 762 770	Scotland
+#7	AnnotatorNotes T10	https://en.wikipedia.org/wiki/Scotland
+T11	Organisation 1241 1271	Spratton Local History Society
+T13	Organisation 1289 1320	Northamptonshire County Council
+#9	AnnotatorNotes T13	https://en.wikipedia.org/wiki/Northamptonshire_County_Council
+T15	Organisation 1322 1347	Daventry District Council
+T17	Organisation 1356 1397	Daventry District Housing Community Chest
+T12	Location 1241 1249	Spratton
+#8	AnnotatorNotes T12	https://en.wikipedia.org/wiki/Spratton
+T14	Location 1289 1305	Northamptonshire
+#10	AnnotatorNotes T14	https://en.wikipedia.org/wiki/Northamptonshire
+T16	Location 1322 1339	Daventry District
+#11	AnnotatorNotes T16	https://en.wikipedia.org/wiki/Daventry_District
+T18	Location 1356 1373	Daventry District
+#12	AnnotatorNotes T18	https://en.wikipedia.org/wiki/Daventry_District
+T19	Location 1322 1330	Daventry
+#13	AnnotatorNotes T19	https://en.wikipedia.org/wiki/Daventry
+T20	Location 1356 1364	Daventry
+#14	AnnotatorNotes T20	https://en.wikipedia.org/wiki/Daventry
+T21	Coreference 115 124	young man
+R1	Coreferent arg1:T21 Arg2:T5	
+T22	Verb 129 140	was awarded
+R2	Subject Arg1:T22 Arg2:T21	
+R3	Object Arg1:T22 Arg2:T3	
+T23	Coreference 254 265	the village
+R4	Coreferent arg1:T23 Arg2:T2	
+T24	Verb 245 253	lived in
+R5	Subject Arg1:T24 Arg2:T5	
+R6	Object Arg1:T24 Arg2:T23	
+T25	Coreference 848 864	former colleague

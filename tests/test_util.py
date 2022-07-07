@@ -51,13 +51,6 @@ def test_merge_two_overlapping():
     result = merge_two_annotations([test_annotation_begin_2], [test_annotation_two_annotations])
     assert result == ["B-A I-A O O B-A".split()]
 
-brat_text= """INTRODUCTION
-The society has researched all the men from Spratton who served in the Great War and where they lived in the village.\u00a0 You can read their biographies and see where they lived on a Map of how the village looked at the time. \u00a0There is a page where you\u00a0can read about the research\u00a0in more detail, including their occupations, when they joined up, which service they were in, which regiments they joined, when they joined, prisoners of war, men who were injured,\u00a0and those men who died. \u00a0There is also information about the campaign medals and medals for distinguished service that the men received. \u00a0Lastly there is detailed information about the sources we used. \u00a0We have tried to be as accurate as possible, but we are always interested in receiving corrections and further information about the men. \u00a0If you have anything to contribute do please contact us at\u00a0information@sprattonhistory.org.
-The first airman to be awarded the Victoria Cross, William Rhodes-Moorhouse, lived in Spratton.\u00a0 On the centenary of his death we held a Spratton Remembers the Great War event, including displays by the army and local historical societies, and a fly-past by a replica World War 1 plane.\u00a0 We also held a Rhodes-Moorhouse VC Commemoration to dedicate a memorial stone in his honour."""
-brat_ann = """T1	Location 57 65	Spratton
-#1	AnnotatorNotes T1	https://en.wikipedia.org/wiki/Spratton"""
-def test_from_brat_annotations():
-    assert get_offsets_from_brat(brat_text, brat_ann) == [(57, 67, {"label": "Location", "URI": "https://en.wikipedia.org/wiki/Spratton"})]
 
 def test_get_offsets_works_with_sane_text():
     text = "I like cakes."
@@ -162,15 +155,20 @@ def test_get_sent_offsets_on_realistic_input():
 
                 for i, (start, end, _) in enumerate(offsets):
                     assert all_anns[i] == normalise(doc[field][start:end])
-                    
+
+def test_get_brat_offsets_works_with_links():
+    brat_ann = """T1	Location 57 65	Spratton
+#1	AnnotatorNotes T1	https://en.wikipedia.org/wiki/Spratton"""
+    
+    brat_ann = brat_ann.split("\n")
+    print(list(get_offsets_from_brat(brat_ann)))
+    assert get_offsets_from_brat(brat_ann) == [(57, 65, {"label": "Location", "URI": "https://en.wikipedia.org/wiki/Spratton"})]
                
 def test_get_brat_offsets_works_with_sane_input():
     text = "John was born in Spratton in 1890, the son of Joseph Copson"
     annotation = ["T1	Person 46 59	Joseph Copson"]
     offsets, label = get_offsets_from_brat(annotation, True)
     assert text[slice(*offsets[0][:2])] == 'Joseph Copson'
-    assert offsets[0][2] == "Person"
-    assert label == ['joseph copson']
 
 def test_get_brat_offsets_on_realistic_input():
     
