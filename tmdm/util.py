@@ -123,6 +123,9 @@ def get_offsets_from_sentences(text: str, annotation: Iterable[Iterable[Tuple[st
         result.extend(sent_result)
     return result
 
+def get_offsets_from_brat(text: str, annotation: Iterable[Iterable[Tuple[str, str]]]):
+    raise NotImplementedError()
+
 
 def bio_generator(tags: List[str], sep='-') -> Tuple[Tuple[int, int], str]:
     start = 0

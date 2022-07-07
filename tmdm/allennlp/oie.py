@@ -20,7 +20,6 @@ from tmdm.pipe.pipe import PipeElement
 
 ModelOutput = Dict[str, np.ndarray]
 
-
 def my_join_mwp(tags: List[str], mask: List[int]):
     assert len(tags) == len(mask), f"len(tags) != len(mask) ({len(tags)} != {len(mask)})"
     # assuming that the predicate is continuous
