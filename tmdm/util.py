@@ -123,8 +123,16 @@ def get_offsets_from_sentences(text: str, annotation: Iterable[Iterable[Tuple[st
         result.extend(sent_result)
     return result
 
-def get_offsets_from_brat(text: str, annotation: Iterable[Iterable[Tuple[str, str]]]):
-    raise NotImplementedError()
+
+def get_offsets_from_brat(annotation: Iterable[str], testing: bool=False):
+    tags = [a for a in annotation if a[0] == "T"]
+    offsets = [a.split("\t")[1] for a in tags]
+    result = list(map(lambda x: x.split(), offsets))
+    result = list(map(lambda x: tuple([int(x[1]), int(x[2]), x[0]]), result))
+    if testing:
+        label = [a.split("\t")[2].lower() for a in tags]
+        return [result, label]
+    return result
 
 
 def bio_generator(tags: List[str], sep='-') -> Tuple[Tuple[int, int], str]:
