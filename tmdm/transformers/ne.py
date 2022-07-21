@@ -54,4 +54,5 @@ class OnlineNerProvider(OnlineProvider):
 
 def get_ne_pipe(model: str = None, tokenizer: str = None, cuda=-1):
     return PipeElement(name='ner', field='nes',
-                       provider=OnlineNerProvider("ner", path_or_name=model, path_or_name_tokenizer=tokenizer, converter=convert))
+                       provider=OnlineNerProvider("ner", path_or_name=model, path_or_name_tokenizer=tokenizer,
+                                                  converter=convert, cuda=cuda))

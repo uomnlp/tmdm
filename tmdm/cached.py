@@ -2,8 +2,10 @@ from typing import Dict, Any, Union, Callable
 
 from loguru import logger
 from overrides import overrides
-from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
+# from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
 from spacy.tokens.doc import Doc
+from spacy.training import iob_to_biluo
+from spacy.training.iob_utils import offsets_from_biluo_tags
 
 from tmdm import util
 from tmdm.classes import Provider, CharOffsetAnnotation
@@ -17,7 +19,7 @@ class Cached(Provider):
     name = 'cached'
     known_schemas = {
         # these assume same tokenisation
-        "bio": lambda doc, annotation: offsets_from_biluo_tags(iob_to_biluo(doc, annotation)),
+        "bio": lambda doc, annotation: offsets_from_biluo_tags(doc, iob_to_biluo(annotation)),
         "bilou": offsets_from_biluo_tags,
         "offsets": OFFSETS,
         "list_of_clusters": convert_clusters_to_offsets,
