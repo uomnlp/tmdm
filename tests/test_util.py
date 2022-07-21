@@ -3,7 +3,7 @@ import string
 from loguru import logger
 
 from tests import testutil
-from tmdm.util import merge_two_annotations, bio_generator, get_offsets, get_offsets_from_sentences
+from tmdm.util import merge_two_annotations, bio_generator, get_offsets, get_offsets_from_sentences, get_offsets_from_brat
 import pytest
 import os
 
@@ -155,3 +155,33 @@ def test_get_sent_offsets_on_realistic_input():
 
                 for i, (start, end, _) in enumerate(offsets):
                     assert all_anns[i] == normalise(doc[field][start:end])
+
+def test_get_brat_offsets_works_with_links():
+    brat_ann = """T1	Location 57 65	Spratton
+#1	AnnotatorNotes T1	https://en.wikipedia.org/wiki/Spratton"""
+    
+    brat_ann = brat_ann.split("\n")
+    print(list(get_offsets_from_brat(brat_ann)))
+    assert get_offsets_from_brat(brat_ann) == [(57, 65, {"label": "Location", "URI": "https://en.wikipedia.org/wiki/Spratton"})]
+               
+def test_get_brat_offsets_works_with_sane_input():
+    text = "John was born in Spratton in 1890, the son of Joseph Copson"
+    annotation = ["T1	Person 46 59	Joseph Copson"]
+    offsets, label = get_offsets_from_brat(annotation, True)
+    assert text[slice(*offsets[0][:2])] == 'Joseph Copson'
+
+def test_get_brat_offsets_on_realistic_input():
+    
+    def normalise(input: str):
+        chars = (set(string.printable))
+        return "".join(c.lower() for c in input if c in chars)
+    
+    brat_txt, brat_ann = testutil.get_test_brat()
+    brat_ann = brat_ann.split("\n")
+    
+    norm_txt = list(map(normalise, brat_txt))
+    offsets, label = get_offsets_from_brat(brat_ann, True)
+    
+    for idx, s in enumerate(offsets):
+        token = norm_txt[s[0]:s[1]]
+        assert "".join(token) == label[idx]

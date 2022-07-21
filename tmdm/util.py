@@ -3,7 +3,7 @@ import string
 import handystuff.loaders
 
 import tmdm
-#from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
+# from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
 from srsly import ujson as json
@@ -122,6 +122,23 @@ def get_offsets_from_sentences(text: str, annotation: Iterable[Iterable[Tuple[st
         sent_result, offset = get_offsets(text[offset:], sent, init_offset=offset, return_last_match=True)
         result.extend(sent_result)
     return result
+
+
+def get_offsets_from_brat(annotation: Iterable[str], testing: bool = False):
+    tags = [a.split("\t") for a in annotation if a.strip()[0] == "T"]
+    links = [a.split("\t") for a in annotation if a.strip()[0] == "#"]
+    result = {}
+    for t in tags:
+        offset = t[1].split()
+        result[t[0]] = [int(offset[1]), int(offset[2]), {"label": offset[0], "URI": ""}]
+    for l in links:
+        idx = l[1].split()[1]
+        result[idx][2]["URI"] = l[2]
+    ret = [tuple(x) for x in result.values()]
+    if testing:
+        label = [a[2].lower() for a in tags]
+        return [ret, label]
+    return ret
 
 
 def bio_generator(tags: List[str], sep='-') -> Tuple[Tuple[int, int], str]:

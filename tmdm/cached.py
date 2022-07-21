@@ -9,7 +9,7 @@ from spacy.training.iob_utils import offsets_from_biluo_tags
 
 from tmdm import util
 from tmdm.classes import Provider, CharOffsetAnnotation
-from tmdm.util import convert_clusters_to_offsets, get_offsets, get_offsets_from_sentences
+from tmdm.util import convert_clusters_to_offsets, get_offsets, get_offsets_from_sentences, get_offsets_from_brat
 
 OFFSETS = object()
 
@@ -40,9 +40,9 @@ class Cached(Provider):
 
         # annotation: Tuple[List[List[str]], Tuple[List[List[str]]
         "tuple_of_lists_of_lists": lambda doc, annotation:
-        get_offsets_from_sentences(doc.text, ((w, l) for ws, ls in zip(*annotation[:2]) for w, l in zip(ws, ls)))
+        get_offsets_from_sentences(doc.text, ((w, l) for ws, ls in zip(*annotation[:2]) for w, l in zip(ws, ls))),
 
-        # TODO: BRAT
+        "brat": get_offsets_from_brat,
         # TODO: Pubmed
     }
 
