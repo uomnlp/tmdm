@@ -1,9 +1,11 @@
 """
 Setup script adapted from https://github.com/allenai/allennlp-models/blob/master/setup.py
 """
+import shlex
+
 from setuptools import setup, find_packages
 import sys
-
+import subprocess
 # import os
 
 # version.py defines the VERSION and VERSION_SHORT variables.
@@ -22,6 +24,24 @@ with open("requirements.txt") as requirements_file:
             install_requirements.append(f"{name} @ {line}")
         else:
             install_requirements.append(line)
+
+from setuptools import setup
+from setuptools.command.develop import develop
+from setuptools.command.install import install
+
+
+class PostDevelopCommand(develop):
+    """Post-installation for development mode."""
+    def run(self):
+        develop.run(self)
+        subprocess.check_call(shlex.split('python -m spacy download en_core_web_sm'))
+
+class PostInstallCommand(install):
+    """Post-installation for installation mode."""
+    def run(self):
+        install.run(self)
+        # PUT YOUR POST-INSTALL SCRIPT HERE or CALL A FUNCTION
+        subprocess.check_call(shlex.split('python -m spacy download en_core_web_sm'))
 
 # make pytest-runner a conditional requirement,
 # per: https://github.com/pytest-dev/pytest-runner#considerations
@@ -56,4 +76,8 @@ setup(
     include_package_data=True,
     python_requires=">=3.6",
     zip_safe=False,
+    cmdclass={
+        'develop': PostDevelopCommand,
+        'install': PostInstallCommand,
+    }
 )

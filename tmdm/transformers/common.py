@@ -45,9 +45,7 @@ class OnlineProvider(Provider):
         ...
 
     def load(self, _=None):
-        self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer)
-        if self.cuda >= 0:
-            self.pipeline.device = f"gpu:{self.cuda}"
+        self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer, device=self.cuda)
 
     def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
         return self.annotate_batch([doc])[0]

@@ -3,7 +3,7 @@ import string
 import handystuff.loaders
 
 import tmdm
-from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
+#from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
 from srsly import ujson as json
@@ -203,11 +203,11 @@ def get_all_subclasses(cls):
     return set(cls.__subclasses__()).union(s for c in cls.__subclasses__() for s in get_all_subclasses(c))
 
 
-def failsafe_combined_rule_sentence_segmenter(doc: Doc):
-    if doc:
-        return combined_rule_sentence_segmenter(doc)
-    else:
-        return doc
+# def failsafe_combined_rule_sentence_segmenter(doc: Doc):
+#     if doc:
+#         return combined_rule_sentence_segmenter(doc)
+#     else:
+#         return doc
 
 
 class OneSentSentencizer:
