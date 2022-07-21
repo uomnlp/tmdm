@@ -8,10 +8,12 @@ from allennlp_models.structured_prediction.predictors.openie import sanitize_lab
 from loguru import logger
 from math import ceil
 
-from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
+# from spacy.gold import offsets_from_biluo_tags, iob_to_biluo
 from spacy.tokens import Doc, Token, Span
 from typing import List, Dict
 import numpy as np
+from spacy.training.iob_utils import offsets_from_biluo_tags, iob_to_biluo
+
 from tmdm.allennlp.common import OnlineProvider
 from tmdm.classes import CharOffsetAnnotation
 

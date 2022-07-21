@@ -1,16 +1,16 @@
 import spacy
 from typing import Tuple, Any, Union, Callable, Optional
-
-from loguru import logger
-from scispacy.custom_tokenizer import combined_rule_tokenizer
-from spacy.language import Language
-
-from tmdm.classes import Provider
-from tmdm.cached import Cached
-from tmdm.pipe.coref import CorefPipe
 from tmdm.pipe.pipe import Pipeline
+# from loguru import logger
+# from scispacy.custom_tokenizer import combined_rule_tokenizer
+# from spacy.language import Language
+
+# from tmdm.classes import Provider
+# from tmdm.cached import Cached
+# from tmdm.pipe.coref import CorefPipe
+
 #from tmdm.pipe.tokenizer import IDAssigner
-from tmdm.util import failsafe_combined_rule_sentence_segmenter, OneSentSentencizer
+# from tmdm.util import failsafe_combined_rule_sentence_segmenter, OneSentSentencizer
 
 
 def change_getter(nlp, getter=Callable[[Any, ], Tuple[str, str]]):
