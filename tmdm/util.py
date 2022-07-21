@@ -3,7 +3,7 @@ import string
 import handystuff.loaders
 
 import tmdm
-#from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
+# from scispacy.custom_sentence_segmenter import combined_rule_sentence_segmenter
 from spacy.tokens import Doc
 from srsly import msgpack
 from srsly import ujson as json
@@ -124,7 +124,7 @@ def get_offsets_from_sentences(text: str, annotation: Iterable[Iterable[Tuple[st
     return result
 
 
-def get_offsets_from_brat(annotation: Iterable[str], testing: bool=False):
+def get_offsets_from_brat(annotation: Iterable[str], testing: bool = False):
     tags = [a.split("\t") for a in annotation if a.strip()[0] == "T"]
     links = [a.split("\t") for a in annotation if a.strip()[0] == "#"]
     result = {}
