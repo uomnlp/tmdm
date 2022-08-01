@@ -85,7 +85,7 @@ class OnlineNerProvider(OnlineProvider):
         return alltuples
 
 
-def get_ne_pipe(model: str = None, tokenizer: str = None, cuda=-1):
+def get_ne_pipe(postprocess: bool = False, model: str = None, tokenizer: str = None, cuda=-1):
     return PipeElement(name='ner', field='nes',
-                       provider=OnlineNerProvider("ner", path_or_name=model, path_or_name_tokenizer=tokenizer,
+                       provider=OnlineNerProvider(task="ner", postprocess=postprocess, path_or_name=model, path_or_name_tokenizer=tokenizer,
                                                   converter=convert, cuda=cuda))

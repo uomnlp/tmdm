@@ -19,6 +19,7 @@ class OnlineProvider(Provider):
     def __init__(
             self,
             task: str,
+            postprocess: bool,
             path_or_name=None,
             path_or_name_tokenizer=None,
             getter: Callable[[Dict[str, Any]], Any] = None,
@@ -28,6 +29,7 @@ class OnlineProvider(Provider):
     ):
         super().__init__()
 
+        self.postprocess = postprocess
         self.preprocess = self._preprocess if preprocessor is default else preprocessor
         self.converter = converter
         self.getter = getter

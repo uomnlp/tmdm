@@ -84,7 +84,7 @@ class PipeElement:
             for doc, annotations in zip(docs, annotated_batch):
                 setattr(doc._, self.field, annotations)
 
-            if self.name == 'ner':
+            if self.name == 'ner' and self.provider.postprocess:
                 allnestuples = self.provider.postprocess_batch(docs)
 
                 for doc in docs:
