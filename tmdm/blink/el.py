@@ -30,7 +30,7 @@ from tmdm.blink.data_process import (
 
 import handystuff.loaders
 
-def annotate2(ner_model, input_sentences):
+def annotate(ner_model, input_sentences):
     ner_output_data = ner_model.predict(input_sentences)
     sentences = ner_output_data["sentences"]
     mentions = ner_output_data["mentions"]
@@ -165,16 +165,12 @@ class OnlineELProvider(Provider):
     
     def load_models(
             self,
-            biencoder_model: str="./BLINK/models/biencoder_wiki_large.bin",
-            biencoder_config: str="./BLINK/models/biencoder_wiki_large.json",
-            entity_catalogue: str="./BLINK/models/entity.jsonl",
-            entity_encoding: str="./BLINK/models/all_entities_large.t7",
     ):
 
         # load biencoder model
-        with open("./BLINK/models/biencoder_wiki_large.json") as json_file:
+        with open("./tmdm/models/biencoder_wiki_large.json") as json_file:
             biencoder_params = json.load(json_file)
-            biencoder_params["path_to_model"] = "./BLINK/models/biencoder_wiki_large.bin"
+            biencoder_params["path_to_model"] = "./tmdm/models/biencoder_wiki_large.bin"
         biencoder = load_biencoder(biencoder_params)
 
         crossencoder = None
@@ -189,8 +185,8 @@ class OnlineELProvider(Provider):
             wikipedia_id2local_id,
             faiss_indexer,
         ) = load_candidates(
-            "./BLINK/models/entity.jsonl", 
-            "./BLINK/models/all_entities_large.t7", 
+            "./tmdm/models/entity.jsonl", 
+            "./tmdm/models/all_entities_large.t7", 
             faiss_index=None, 
             index_path=None,
             logger=None,
@@ -223,7 +219,7 @@ class OnlineELProvider(Provider):
         ner_model = NER.get_model()
         for doc in docs:
             text = str(doc)
-            samples = annotate2(ner_model, [text])
+            samples = annotate(ner_model, [text])
             # prepare the data for biencoder
             dataloader = process_biencoder_dataloader(
                 samples, self.biencoder.tokenizer, self.biencoder_params
