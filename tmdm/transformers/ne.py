@@ -52,7 +52,40 @@ class OnlineNerProvider(OnlineProvider):
         return [self.converter(doc, next(batched_results_iter)) for doc in docs]
 
 
-def get_ne_pipe(model: str = None, tokenizer: str = None, cuda=-1):
+    def postprocess_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
+        alltuples = []
+        for doc in docs:
+            doctuples = []
+            for ne in doc._.nes:
+                doctuples.append([ne.start_char, ne.end_char, ne.label_])
+
+            # Merge until cannot merge anymore
+            changed = True
+            while changed:
+                changed = False
+                for i in range(len(doctuples)-1):
+                    if doctuples[i] == None:
+                        continue
+
+                    end1 = doctuples[i][1]
+                    start2 = doctuples[i+1][0]
+                    if end1 == start2 or (end1+1) == start2:
+                        doctuples[i][1] = doctuples[i+1][1]
+                        changed = True
+                        doctuples[i+1] = None
+
+                for i in range(len(doctuples)-1,0,-1):
+                    if doctuples[i] == None:
+                        del doctuples[i]
+
+            for i in range(len(doctuples)):
+                doctuples[i] = tuple(doctuples[i])
+            alltuples.append(doctuples)
+
+        return alltuples
+
+
+def get_ne_pipe(postprocess: bool = False, model: str = None, tokenizer: str = None, cuda=-1):
     return PipeElement(name='ner', field='nes',
-                       provider=OnlineNerProvider("ner", path_or_name=model, path_or_name_tokenizer=tokenizer,
+                       provider=OnlineNerProvider(task="ner", postprocess=postprocess, path_or_name=model, path_or_name_tokenizer=tokenizer,
                                                   converter=convert, cuda=cuda))
