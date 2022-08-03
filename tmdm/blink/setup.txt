@@ -1,0 +1,10 @@
+# Create conda environment and install requirements
+conda create -n blink37 -y python=3.7 && conda activate blink37
+pip install -r requirements.txt
+
+# Download models for blink
+chmod +x download_blink_models.sh
+./download_blink_models.sh
+
+# Run blink
+python tanc/scripts/create_index_tanc.py ./tanc/spratton_out.jsonl --batch-size 8 --writer html --log-graph output.ttl --writer-file test.html --with-oie --desc-field content  --out-tsv system.tsv --log-level INFO
