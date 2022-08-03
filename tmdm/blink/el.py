@@ -117,7 +117,7 @@ def run_biencoder(biencoder, dataloader, candidate_encoding, top_k=10, indexer=N
     labels = []
     nns = []
     all_scores = []
-    for batch in tqdm(dataloader):
+    for batch in dataloader:
         context_input, _, label_ids = batch
         with torch.no_grad():
             if indexer is not None:
