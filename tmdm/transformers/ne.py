@@ -6,6 +6,7 @@ from tmdm.classes import CharOffsetAnnotation
 from tmdm.pipe.pipe import PipeElement
 from tmdm.transformers.common import OnlineProvider
 from tmdm.util import get_offsets_from_sentences
+from transformers.pipelines import AggregationStrategy
 
 DocumentLevelTransformerEntitiesAnnotation = List[List[Dict[str, Any]]]
 
@@ -25,6 +26,11 @@ def convert(doc: Doc, result: DocumentLevelTransformerEntitiesAnnotation, filter
 
 
 class OnlineNerProvider(OnlineProvider):
+    def __init__(self, task: str, post_process, *args, **kwargs):
+        super().__init__(task, *args, **kwargs)
+        self.post_process = post_process
+        self.pipeline.aggregation_strategy = AggregationStrategy.FIRST
+
     def annotate_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         logger.trace("Entering annotate batch...")
         docs = list(docs)
@@ -46,11 +52,11 @@ class OnlineNerProvider(OnlineProvider):
         #    logger.error(str(e))
         #    return [([], []) for _ in docs]
         result_iterator = iter(result)
-        batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
+        # batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
+        batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
         logger.debug(batched_results)
         batched_results_iter = iter(batched_results)
         return [self.converter(doc, next(batched_results_iter)) for doc in docs]
-
 
     def postprocess_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         alltuples = []
@@ -63,18 +69,18 @@ class OnlineNerProvider(OnlineProvider):
             changed = True
             while changed:
                 changed = False
-                for i in range(len(doctuples)-1):
+                for i in range(len(doctuples) - 1):
                     if doctuples[i] == None:
                         continue
 
                     end1 = doctuples[i][1]
-                    start2 = doctuples[i+1][0]
-                    if end1 == start2 or (end1+1) == start2:
-                        doctuples[i][1] = doctuples[i+1][1]
+                    start2 = doctuples[i + 1][0]
+                    if end1 == start2 or (end1 + 1) == start2:
+                        doctuples[i][1] = doctuples[i + 1][1]
                         changed = True
-                        doctuples[i+1] = None
+                        doctuples[i + 1] = None
 
-                for i in range(len(doctuples)-1,0,-1):
+                for i in range(len(doctuples) - 1, 0, -1):
                     if doctuples[i] == None:
                         del doctuples[i]
 
@@ -85,7 +91,8 @@ class OnlineNerProvider(OnlineProvider):
         return alltuples
 
 
-def get_ne_pipe(postprocess: bool = False, model: str = None, tokenizer: str = None, cuda=-1):
+def get_ne_pipe(post_process: bool = False, model: str = None, tokenizer: str = None, cuda=-1):
     return PipeElement(name='ner', field='nes',
-                       provider=OnlineNerProvider(task="ner", postprocess=postprocess, path_or_name=model, path_or_name_tokenizer=tokenizer,
-                                                  converter=convert, cuda=cuda))
+                       provider=OnlineNerProvider(task="ner", path_or_name=model,
+                                                  path_or_name_tokenizer=tokenizer,
+                                                  converter=convert, cuda=cuda, post_process=post_process))
