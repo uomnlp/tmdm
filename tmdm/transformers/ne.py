@@ -6,7 +6,7 @@ from tmdm.classes import CharOffsetAnnotation
 from tmdm.pipe.pipe import PipeElement
 from tmdm.transformers.common import OnlineProvider
 from tmdm.util import get_offsets_from_sentences
-from transformers.pipelines import AggregationStrategy
+from transformers.pipelines import AggregationStrategy, pipeline
 
 DocumentLevelTransformerEntitiesAnnotation = List[List[Dict[str, Any]]]
 
@@ -29,7 +29,9 @@ class OnlineNerProvider(OnlineProvider):
     def __init__(self, task: str, post_process, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
         self.post_process = post_process
-        self.pipeline.aggregation_strategy = AggregationStrategy.FIRST
+
+    def load(self, _=None):
+        self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer, device=self.cuda)# aggregation_strategy='first')
 
     def annotate_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         logger.trace("Entering annotate batch...")
@@ -53,7 +55,8 @@ class OnlineNerProvider(OnlineProvider):
         #    return [([], []) for _ in docs]
         result_iterator = iter(result)
         # batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
-        batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
+        batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
+        #batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
         logger.debug(batched_results)
         batched_results_iter = iter(batched_results)
         return [self.converter(doc, next(batched_results_iter)) for doc in docs]
