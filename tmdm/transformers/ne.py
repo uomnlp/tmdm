@@ -6,7 +6,7 @@ from tmdm.classes import CharOffsetAnnotation
 from tmdm.pipe.pipe import PipeElement
 from tmdm.transformers.common import OnlineProvider
 from tmdm.util import get_offsets_from_sentences
-from transformers.pipelines import AggregationStrategy, pipeline
+from transformers.pipelines import pipeline
 
 DocumentLevelTransformerEntitiesAnnotation = List[List[Dict[str, Any]]]
 
