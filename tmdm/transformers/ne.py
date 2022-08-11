@@ -45,8 +45,10 @@ class OnlineNerProvider(OnlineProvider):
     def __init__(self, task: str, post_process, with_date, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
         self.post_process = post_process
-        if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin", map_location='cuda:0'))
+        if with_date: self.date_model = SequenceTagger.load("flair/ner-english-ontonotes-large")
         else: self.date_model = None
+#         if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin", map_location='cuda:0'))
+#         else: self.date_model = None
 
     def load(self, _=None):
         self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer, device=self.cuda)# aggregation_strategy='first')

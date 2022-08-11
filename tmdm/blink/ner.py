@@ -37,16 +37,16 @@ class NER_model:
     
 class Flair(NER_model):
     def __init__(self, parameters=None, with_date=False):
-#         self.model = SequenceTagger.load("ner")
-#         self.date_model = SequenceTagger.load("flair/ner-english-ontonotes-large")
-        self.model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-large/pytorch_model.bin",map_location='cuda:0'))
-        if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin",map_location='cuda:0'))
+        self.model = SequenceTagger.load("ner")
+        if with_date: self.date_model = SequenceTagger.load("flair/ner-english-ontonotes-large")
         else: self.date_model = None
+#         self.model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-large/pytorch_model.bin",map_location='cuda:0'))
+#         if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin",map_location='cuda:0'))
+#         else: self.date_model = None
 
     def predict(self, sentences):
         mentions = []
         for sent_idx, s in enumerate(sentences):
-#             sent = Sentence(sent, use_tokenizer=True)
             sent = Sentence(s)
             self.model.predict(sent)
             sent_mentions = sent.to_dict(tag_type="ner")["entities"]
