@@ -97,7 +97,7 @@ class OnlineELProvider(Provider):
         result = [annotate(self.endpoint, str(i)) for i in docs]
         logger.debug(f"Result: {result}")
         assert len(result) == len(docs)
-
+#         print([convert(doc, r, self.rich, self.nes_only, threshold=self.threshold) for doc, r in zip(docs, result)])
         return [convert(doc, r, self.rich, self.nes_only, threshold=self.threshold) for doc, r in zip(docs, result)]
 
 

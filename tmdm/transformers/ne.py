@@ -1,15 +1,31 @@
 from typing import Any, Dict, List, Tuple
 from loguru import logger
 from spacy.tokens import Doc
+from dateutil.parser import parse
 
 from tmdm.classes import CharOffsetAnnotation
 from tmdm.pipe.pipe import PipeElement
 from tmdm.transformers.common import OnlineProvider
 from tmdm.util import get_offsets_from_sentences
 from transformers.pipelines import pipeline
-
+from flair.data import Sentence
+from flair.models import SequenceTagger
+import torch 
 DocumentLevelTransformerEntitiesAnnotation = List[List[Dict[str, Any]]]
 
+def is_date(string, fuzzy=False):
+    """
+    Return whether the string can be interpreted as a date.
+
+    :param string: str, string to check for date
+    :param fuzzy: bool, ignore unknown tokens in string if True
+    """
+    try: 
+        parse(string, fuzzy=fuzzy)
+        return True
+
+    except ValueError:
+        return False
 
 def convert(doc: Doc, result: DocumentLevelTransformerEntitiesAnnotation, filter_subwords=True) -> CharOffsetAnnotation:
     results = []
@@ -26,9 +42,11 @@ def convert(doc: Doc, result: DocumentLevelTransformerEntitiesAnnotation, filter
 
 
 class OnlineNerProvider(OnlineProvider):
-    def __init__(self, task: str, post_process, *args, **kwargs):
+    def __init__(self, task: str, post_process, with_date, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
         self.post_process = post_process
+        if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin", map_location='cuda:0'))
+        else: self.date_model = None
 
     def load(self, _=None):
         self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer, device=self.cuda)# aggregation_strategy='first')
@@ -59,7 +77,20 @@ class OnlineNerProvider(OnlineProvider):
         #batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
         logger.debug(batched_results)
         batched_results_iter = iter(batched_results)
-        return [self.converter(doc, next(batched_results_iter)) for doc in docs]
+        ret = [self.converter(doc, next(batched_results_iter)) for doc in docs]
+        mentions = []
+        if self.date_model:
+            for idx, doc in enumerate(docs):
+                sent = Sentence(str(doc))
+                self.date_model.predict(sent)
+                sent_mentions = sent.to_dict(tag_type="ner")["entities"]
+                for mention in sent_mentions:
+                    label = str(mention["labels"][0]).split()[0]
+                    m = mention["text"].lower()
+                    if label == "DATE" and is_date(m) and len(m) > 2:
+                        ret[idx].append((mention["start_pos"], mention["end_pos"], label))
+#                         mentions.append(mention)
+        return ret
 
     def postprocess_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         alltuples = []
@@ -94,8 +125,8 @@ class OnlineNerProvider(OnlineProvider):
         return alltuples
 
 
-def get_ne_pipe(post_process: bool = False, model: str = None, tokenizer: str = None, cuda=-1):
+def get_ne_pipe(post_process: bool = False, model: str = None, tokenizer: str = None, cuda=-1, with_date=False):
     return PipeElement(name='ner', field='nes',
                        provider=OnlineNerProvider(task="ner", path_or_name=model,
                                                   path_or_name_tokenizer=tokenizer,
-                                                  converter=convert, cuda=cuda, post_process=post_process))
+                                                  converter=convert, cuda=cuda, post_process=post_process, with_date=with_date))

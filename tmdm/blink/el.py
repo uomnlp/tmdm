@@ -5,8 +5,6 @@ from spacy.tokens import Doc, Span
 from tmdm.classes import CharOffsetAnnotation, Provider
 from tmdm.pipe.pipe import PipeElement
 from tmdm.util import get_offsets_from_sentences
-from spotlight import annotate as spotlight_annotate
-from spotlight import SpotlightException
 from requests.exceptions import HTTPError
 
 import spacy
@@ -30,7 +28,7 @@ from tmdm.blink.data_process import (
 
 import handystuff.loaders
 
-def annotate(ner_model, input_sentences):
+def annotate(ner_model, input_sentences, output_dates=False):
     ner_output_data = ner_model.predict(input_sentences)
     sentences = ner_output_data["sentences"]
     mentions = ner_output_data["mentions"]
@@ -140,22 +138,15 @@ def run_biencoder(biencoder, dataloader, candidate_encoding, top_k=10, indexer=N
 class OnlineELProvider(Provider):
     name = 'blink-el-provider'
     
-    def __init__(self, types=None, rich=False, nes_only=False, threshold=0.6):
+    def __init__(self, types=None, rich=False, nes_only=False, threshold=0.6, blink_folder="./models", with_date=False):
         self.types = types
         self.rich = rich
         self.nes_only = nes_only
         self.threshold = threshold
         self.nlp = spacy.load("en_core_web_lg") 
-        self.biencoder = None
-        self.biencoder_params = None
-        self.crossencoder = None
-        self.crossencoder_params = None
-        self.candidate_encoding = None
-        self.title2id = None
-        self.id2title = None
-        self.id2text = None
-        self.wikipedia_id2local_id = None
-        self.faiss_indexer = None
+        self.blink_folder = blink_folder
+        self.with_date = with_date
+        self.load_models()
 
     def save(self, path: str):
         pass
@@ -168,9 +159,9 @@ class OnlineELProvider(Provider):
     ):
 
         # load biencoder model
-        with open("./tmdm/models/biencoder_wiki_large.json") as json_file:
+        with open(f"{self.blink_folder}/biencoder_wiki_large.json") as json_file:
             biencoder_params = json.load(json_file)
-            biencoder_params["path_to_model"] = "./tmdm/models/biencoder_wiki_large.bin"
+            biencoder_params["path_to_model"] = f"{self.blink_folder}/biencoder_wiki_large.bin"
         biencoder = load_biencoder(biencoder_params)
 
         crossencoder = None
@@ -185,8 +176,8 @@ class OnlineELProvider(Provider):
             wikipedia_id2local_id,
             faiss_indexer,
         ) = load_candidates(
-            "./tmdm/models/entity.jsonl", 
-            "./tmdm/models/all_entities_large.t7", 
+            f"{self.blink_folder}/entity.jsonl", 
+            f"{self.blink_folder}/all_entities_large.t7", 
             faiss_index=None, 
             index_path=None,
             logger=None,
@@ -208,7 +199,6 @@ class OnlineELProvider(Provider):
     
     def annotate_batch(self, docs: List[Doc], threshold: int=0.9, top_k: int=10) -> List[CharOffsetAnnotation]:
         
-        if not self.biencoder: self.load_models()
         docs = list(docs)
         id2url = {
             v: "https://en.wikipedia.org/wiki?curid=%s" % k
@@ -216,7 +206,7 @@ class OnlineELProvider(Provider):
         }
         predictions = []
         # Load NER model
-        ner_model = NER.get_model()
+        ner_model = NER.get_model(with_date=self.with_date)
         for doc in docs:
             text = str(doc)
             samples = annotate(ner_model, [text])
@@ -254,5 +244,5 @@ class OnlineELProvider(Provider):
             predictions.append(prediction)
         return predictions
 
-def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False, threshold=0.9):
-    return PipeElement(name='el', field='nes', provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold))
+def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False, threshold=0.9, blink_folder="./models", with_date=False):
+    return PipeElement(name='el', field='nes', provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold, blink_folder=blink_folder, with_date=with_date))

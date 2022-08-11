@@ -2,14 +2,15 @@ import itertools
 from collections import defaultdict
 from typing import Tuple, Union, Callable, Dict, List, Type
 
+from dynaconf import settings
 from fastcache import clru_cache
 from loguru import logger
 from spacy.tokens.doc import Doc
 from spacy.tokens.span import Span
 from spacy.tokens.token import Token
 
-# force = settings.get('force', False)
-force = False
+force = settings.get('force', False)
+
 
 def extend(target: Union[Doc, Token, Span], type='method', setter=None, default=None, create_attribute=True):
     def inner(func: Callable):
