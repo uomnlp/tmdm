@@ -83,13 +83,3 @@ class PipeElement:
             assert len(docs) == len(annotated_batch)
             for doc, annotations in zip(docs, annotated_batch):
                 setattr(doc._, self.field, annotations)
-
-            if self.name == 'ner' and self.provider.post_process:
-                allnestuples = self.provider.postprocess_batch(docs)
-
-                for doc in docs:
-                    for ne in doc._.nes:
-                        ne.cache.clear()
-
-                for doc, nestuples in zip(docs, allnestuples):
-                    setattr(doc._, self.field, nestuples)
