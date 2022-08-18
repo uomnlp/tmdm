@@ -88,9 +88,9 @@ def test_blink_candidates():
     
 
 
-if __name__ == "__main__":
-    test_model_exist()
-    test_blink_ner()
-    test_blink_biencoder()
-    test_blink_candidates()
-    test_blink_annotate()
+# if __name__ == "__main__":
+#     test_model_exist()
+#     test_blink_ner()
+#     test_blink_biencoder()
+#     test_blink_candidates()
+#     test_blink_annotate()
