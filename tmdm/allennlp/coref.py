@@ -13,7 +13,11 @@ def get_coref_provider(model_path: str):
 
 
 def get_coref_pipe(model_path: str = 'https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2021.03.10.tar.gz'):
-    from allennlp_models.pretrained import CoreferenceResolver
+    try:
+      from allennlp_models.pretrained import CoreferenceResolver
+    except:
+      from allennlp_models.coref.models import CoreferenceResolver
+    #import allennlp_models.tagging
     converter = convert_clusters_to_offsets
     getter = itemgetter("clusters")
     return PipeElement(name='coref', field='corefs',
