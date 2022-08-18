@@ -137,4 +137,4 @@ def get_ne_pipe(model: str = None, tokenizer: str = None, cuda=-1, with_date=Fal
     return PipeElement(name='ner', field='nes',
                        provider=OnlineNerProvider(task="ner", path_or_name=model,
                                                   path_or_name_tokenizer=tokenizer,
-                                                  converter=convert, cuda=cuda, post_process=post_process, with_date=with_date))
+                                                  converter=convert, cuda=cuda, with_date=with_date))
