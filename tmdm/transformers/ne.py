@@ -57,7 +57,7 @@ class OnlineNerProvider(OnlineProvider):
 
     def load(self, _=None):
         self.pipeline = pipeline(self.task, model=self.path_or_name, tokenizer=self.path_or_name_tokenizer,
-                                 device=self.cuda)  # aggregation_strategy='first')
+                                 device=self.cuda, aggregation_strategy='simple')
 
     def annotate_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
         logger.trace("Entering annotate batch...")
@@ -81,8 +81,7 @@ class OnlineNerProvider(OnlineProvider):
         #    return [([], []) for _ in docs]
         result_iterator = iter(result)
         # batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
-        batched_results = [[self.pipeline.group_entities(next(result_iterator)) for _ in d.sents] for d in docs]
-        # batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
+        batched_results = [[next(result_iterator) for _ in d.sents] for d in docs]
         logger.debug(batched_results)
         batched_results_iter = iter(batched_results)
         ret = [self.converter(doc, next(batched_results_iter)) for doc in docs]
@@ -99,38 +98,6 @@ class OnlineNerProvider(OnlineProvider):
                         ret[idx].append((mention["start_pos"], mention["end_pos"], label))
         #                         mentions.append(mention)
         return ret
-
-    def postprocess_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
-        alltuples = []
-        for doc in docs:
-            doctuples = []
-            for ne in doc._.nes:
-                doctuples.append([ne.start_char, ne.end_char, ne.label_])
-
-            # Merge until cannot merge anymore
-            changed = True
-            while changed:
-                changed = False
-                for i in range(len(doctuples) - 1):
-                    if doctuples[i] == None:
-                        continue
-
-                    end1 = doctuples[i][1]
-                    start2 = doctuples[i + 1][0]
-                    if end1 == start2 or (end1 + 1) == start2:
-                        doctuples[i][1] = doctuples[i + 1][1]
-                        changed = True
-                        doctuples[i + 1] = None
-
-                for i in range(len(doctuples) - 1, 0, -1):
-                    if doctuples[i] == None:
-                        del doctuples[i]
-
-            for i in range(len(doctuples)):
-                doctuples[i] = tuple(doctuples[i])
-            alltuples.append(doctuples)
-
-        return alltuples
 
 
 def get_ne_pipe(model: str = None, tokenizer: str = None, cuda=-1, with_date=False):
