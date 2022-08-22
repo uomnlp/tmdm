@@ -171,7 +171,10 @@ class OnlineRCProvider(Provider):
                     entity_spans.append([(ent1.start_char, ent1.end_char), (ent2.start_char, ent2.end_char)])
                     texts.append(text)
 
-        inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt")
+        if len(entity_spans) == 0:
+            return [[] for i in range(len(docs))]
+
+        inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
         outputs = self.model(**inputs)
 
         # Get best predictions
