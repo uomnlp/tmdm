@@ -28,7 +28,7 @@ class OnlineRCProvider(Provider):
 
     def __init__(self, with_coref=False, cuda=-1):
         self.with_coref = with_coref
-        self.cuda = cuda # Not used
+        self.cuda = cuda
         self.model = None
         self.tokenizer = None
         self.load()
@@ -38,6 +38,8 @@ class OnlineRCProvider(Provider):
 
     def load(self):
         self.model = LukeForEntityPairClassification.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
+        if self.cuda == 0:
+            self.model.to("cuda")
         self.tokenizer = LukeTokenizer.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
 
     def convert(self, results, all_ents):
@@ -175,6 +177,8 @@ class OnlineRCProvider(Provider):
             return [[] for i in range(len(docs))]
 
         inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
+        if self.cuda == 0:
+            inputs = inputs.to("cuda")
         outputs = self.model(**inputs)
 
         # Get best predictions
