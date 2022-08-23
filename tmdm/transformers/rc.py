@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple
 from loguru import logger
 from copy import deepcopy
+from torch import cat
 from spacy.tokens import Doc
 from tmdm.classes import CharOffsetAnnotation, Provider
 from transformers import LukeTokenizer, LukeForEntityPairClassification
@@ -120,6 +121,20 @@ class OnlineRCProvider(Provider):
         #TODO: Also enforce transitive types? member of member, family of family
         return results_copy
 
+    def try_to_run_model(self, texts, entity_spans):
+        try:
+            inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
+            if self.cuda == 0:
+                inputs = inputs.to("cuda")
+            outputs = self.model(**inputs)
+            return outputs.logits
+        except RuntimeError:
+            logger.info("Ran out of memory for RC, halving workload...")
+            half = len(texts) // 2
+            first_logits = self.try_to_run_model(texts[:half], entity_spans[:half])
+            second_logits = self.try_to_run_model(texts[half:], entity_spans[half:])
+            return cat((first_logits, second_logits))
+
     def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
         return self.annotate_batch([doc])[0]
 
@@ -153,7 +168,7 @@ class OnlineRCProvider(Provider):
         entity_spans = []
         entity_combos = []
         for d in range(len(docs)):
-            text = docs[d].text
+            doc_text = docs[d].text
             all_ents = docs_all_ents[d]
             for i in range(len(all_ents)):
                 for j in range(len(all_ents)):
@@ -169,20 +184,30 @@ class OnlineRCProvider(Provider):
                     if ent1_type != "PER" and ent1_type != "ORG":
                         continue
 
-                    entity_combos.append([d, i, j])
-                    entity_spans.append([(ent1.start_char, ent1.end_char), (ent2.start_char, ent2.end_char)])
+                    # Not viable if ents from far apart sentences
+                    same = ent1.sent.start_char == ent2.sent.start_char and ent1.sent.end_char == ent2.sent.end_char
+                    adjacent = (ent2.sent.end_char+1) == ent1.sent.start_char or (ent1.sent.end_char+1) == ent2.sent.start_char
+                    if (not same) and (not adjacent):
+                        continue
+
+                    # Ents can spill over sentence end
+                    text_start = min(ent1.sent.start_char, ent2.sent.start_char)
+                    text_end = max([ent1.end_char, ent1.sent.end_char, ent2.end_char, ent2.sent.end_char])
+                    text = doc_text[text_start:text_end]
                     texts.append(text)
+
+                    span1 = (ent1.start_char - text_start, ent1.end_char - text_start)
+                    span2 = (ent2.start_char - text_start, ent2.end_char - text_start)
+                    entity_spans.append([span1, span2])
+
+                    entity_combos.append([d, i, j])
 
         if len(entity_spans) == 0:
             return [[] for i in range(len(docs))]
 
-        inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
-        if self.cuda == 0:
-            inputs = inputs.to("cuda")
-        outputs = self.model(**inputs)
+        logits = self.try_to_run_model(texts, entity_spans)
 
         # Get best predictions
-        logits = outputs.logits
         top_pred_idxs = logits.argmax(-1)
         top_confidences = logits.max(-1).values
 
