@@ -25,13 +25,15 @@ class NEPostProcessProvider(Provider):
             doctuples = []
             for ne in doc._.nes:
                 # Split NEs in two if contain ' and '
-                if " and " in ne.text:
-                    and_start = ne.start_char + ne.text.index(" and ")
-                    and_end = and_start + len(" and ")
-                    doctuples.append([ne.start_char, and_start, ne.label_])
-                    doctuples.append([and_end, ne.end_char, ne.label_])
-                else:
-                    doctuples.append([ne.start_char, ne.end_char, ne.label_])
+                # if " and " in ne.text:
+                #     and_start = ne.start_char + ne.text.index(" and ")
+                #     and_end = and_start + len(" and ")
+                #     doctuples.append([ne.start_char, and_start, ne.label_])
+                #     doctuples.append([and_end, ne.end_char, ne.label_])
+                # else:
+                #     doctuples.append([ne.start_char, ne.end_char, ne.label_])
+
+                doctuples.append([ne.start_char, ne.end_char, ne.label_])
 
             # Merge until cannot merge anymore
             changed = True

@@ -28,6 +28,19 @@ from tmdm.blink.data_process import (
 
 import handystuff.loaders
 
+def find_within(ents, start, end):
+    for e in ents:
+        logger.debug(f"({start},{end})  vs ({e[0]},{e[1]})")
+        if e[0] >= start and e[1] <= end:
+            yield e
+            
+def find_overlap(ents, start, end):
+    for e in ents:
+        if (e[0] >= start and e[0] <= end) or (e[1] >= start and e[1] <= end):
+            return True
+    return False
+            
+
 def annotate(ner_model, input_sentences, output_dates=False):
     ner_output_data = ner_model.predict(input_sentences)
     sentences = ner_output_data["sentences"]
@@ -50,6 +63,22 @@ def annotate(ner_model, input_sentences, output_dates=False):
         samples.append(record)
     return samples
 
+def select_meta(ent, rich):
+    if rich:
+        return {'uri': ent['URI'], 'support': ent['support'], 'types': ent['types'].split(',') if ent['types'] else [],
+                'similarity': ent['similarityScore'], 'label': ent['URI']}
+    else:
+        return ent['URI']
+
+def convert(doc: Doc, results, rich, nes_only) -> CharOffsetAnnotation:
+    for ne, (s, e, l) in zip(doc._.nes, doc._._nes):
+        overlap = False
+        for r in results:
+            if (r[0] >= s and r[0] <= e) or (r[1] >= s and r[1] <= e):
+                overlap = True
+                break
+        if not overlap: results.append((s, e, l))
+    return results
 
 def load_candidates(
     entity_catalogue, entity_encoding, faiss_index=None, index_path=None, logger=None
@@ -227,10 +256,10 @@ class OnlineELProvider(Provider):
                 mention = sample["mention"].lower()
                 title = self.id2title[e_id].lower()
                 label = sample["label"].split()[0]
-                similarity = self.nlp(mention).similarity(self.nlp(title))
+#                 similarity = self.nlp(mention).similarity(self.nlp(title))
                 
                 if label == "PER" and len(mention.split()) < 2: continue # Rule base filtering 1
-                if similarity < threshold: continue # Rule base filtering 2
+#                 if similarity < threshold: continue # Rule base filtering 2
                 url = id2url[e_id].split("?")[0]+"/"+self.id2title[e_id].replace(' ', '_') # reformat links to wiki pedia style
                 info = {
                     'uri': url,
@@ -242,7 +271,7 @@ class OnlineELProvider(Provider):
                 prediction.append((start, end, info))
                 idx += 1
             predictions.append(prediction)
-        return predictions
+        return [convert(doc, r, self.rich, self.nes_only) for doc, r in zip(docs, predictions)]
 
 def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False, threshold=0.9, blink_folder="./models", with_date=False):
     return PipeElement(name='el', field='nes', provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold, blink_folder=blink_folder, with_date=with_date))
