@@ -28,6 +28,7 @@ from tmdm.blink.data_process import (
 
 import handystuff.loaders
 
+
 def annotate(ner_model, input_sentences, output_dates=False):
     ner_output_data = ner_model.predict(input_sentences)
     sentences = ner_output_data["sentences"]
@@ -38,11 +39,11 @@ def annotate(ner_model, input_sentences, output_dates=False):
         record["label"] = str(mention["labels"][0])
         record["label_id"] = -1
         record["context_left"] = sentences[mention["sent_idx"]][
-            : mention["start_pos"]
-        ].lower()
+                                 : mention["start_pos"]
+                                 ].lower()
         record["context_right"] = sentences[mention["sent_idx"]][
-            mention["end_pos"] :
-        ].lower()
+                                  mention["end_pos"]:
+                                  ].lower()
         record["mention"] = mention["text"].lower()
         record["start_pos"] = int(mention["start_pos"])
         record["end_pos"] = int(mention["end_pos"])
@@ -52,7 +53,7 @@ def annotate(ner_model, input_sentences, output_dates=False):
 
 
 def load_candidates(
-    entity_catalogue, entity_encoding, faiss_index=None, index_path=None, logger=None
+        entity_catalogue, entity_encoding, faiss_index=None, index_path=None, logger=None
 ):
     # only load candidate encoding if not using faiss index
     if faiss_index is None:
@@ -92,6 +93,7 @@ def load_candidates(
         wikipedia_id2local_id,
         indexer,
     )
+
 
 def process_biencoder_dataloader(samples, tokenizer, biencoder_params):
     _, tensor_data = process_mention_data(
@@ -135,15 +137,16 @@ def run_biencoder(biencoder, dataloader, candidate_encoding, top_k=10, indexer=N
         all_scores.extend(scores)
     return labels, nns, all_scores
 
+
 class OnlineELProvider(Provider):
     name = 'blink-el-provider'
-    
+
     def __init__(self, types=None, rich=False, nes_only=False, threshold=0.6, blink_folder="./models", with_date=False):
         self.types = types
         self.rich = rich
         self.nes_only = nes_only
         self.threshold = threshold
-        self.nlp = spacy.load("en_core_web_lg") 
+        self.nlp = spacy.load("en_core_web_lg")
         self.blink_folder = blink_folder
         self.with_date = with_date
         self.load_models()
@@ -152,8 +155,8 @@ class OnlineELProvider(Provider):
         pass
 
     def load(self, path: str):
-        pass 
-    
+        pass
+
     def load_models(
             self,
     ):
@@ -176,13 +179,13 @@ class OnlineELProvider(Provider):
             wikipedia_id2local_id,
             faiss_indexer,
         ) = load_candidates(
-            f"{self.blink_folder}/entity.jsonl", 
-            f"{self.blink_folder}/all_entities_large.t7", 
-            faiss_index=None, 
+            f"{self.blink_folder}/entity.jsonl",
+            f"{self.blink_folder}/all_entities_large.t7",
+            faiss_index=None,
             index_path=None,
             logger=None,
         )
-        
+
         self.biencoder = biencoder
         self.biencoder_params = biencoder_params
         self.crossencoder = crossencoder
@@ -193,13 +196,13 @@ class OnlineELProvider(Provider):
         self.id2text = id2text
         self.wikipedia_id2local_id = wikipedia_id2local_id
         self.faiss_indexer = faiss_indexer
-        self.ner_model NER.get_model(with_date=self.with_date)
+        self.ner_model = NER.get_model(with_date=self.with_date)
 
-    def annotate_document(self, doc: Doc, threshold: int=0.9, top_k: int=10) -> CharOffsetAnnotation:
+    def annotate_document(self, doc: Doc, threshold: int = 0.9, top_k: int = 10) -> CharOffsetAnnotation:
         return self.annotate_batch([doc], threshold, top_k)[0]
-    
-    def annotate_batch(self, docs: List[Doc], threshold: int=0.9, top_k: int=10) -> List[CharOffsetAnnotation]:
-        
+
+    def annotate_batch(self, docs: List[Doc], threshold: int = 0.9, top_k: int = 10) -> List[CharOffsetAnnotation]:
+
         docs = list(docs)
         id2url = {
             v: "https://en.wikipedia.org/wiki?curid=%s" % k
@@ -229,10 +232,11 @@ class OnlineELProvider(Provider):
                 title = self.id2title[e_id].lower()
                 label = sample["label"].split()[0]
                 similarity = self.nlp(mention).similarity(self.nlp(title))
-                
-                if label == "PER" and len(mention.split()) < 2: continue # Rule base filtering 1
-                if similarity < threshold: continue # Rule base filtering 2
-                url = id2url[e_id].split("?")[0]+"/"+self.id2title[e_id].replace(' ', '_') # reformat links to wiki pedia style
+
+                if label == "PER" and len(mention.split()) < 2: continue  # Rule base filtering 1
+                if similarity < threshold: continue  # Rule base filtering 2
+                url = id2url[e_id].split("?")[0] + "/" + self.id2title[e_id].replace(' ',
+                                                                                     '_')  # reformat links to wiki pedia style
                 info = {
                     'uri': url,
                     'support': 1,
@@ -245,5 +249,9 @@ class OnlineELProvider(Provider):
             predictions.append(prediction)
         return predictions
 
-def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False, threshold=0.9, blink_folder="./models", with_date=False):
-    return PipeElement(name='el', field='nes', provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold, blink_folder=blink_folder, with_date=with_date))
+
+def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False,
+                   threshold=0.9, blink_folder="./models", with_date=False):
+    return PipeElement(name='el', field='nes',
+                       provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold,
+                                                 blink_folder=blink_folder, with_date=with_date))
