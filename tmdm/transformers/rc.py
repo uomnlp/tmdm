@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple
 from loguru import logger
 from copy import deepcopy
+from torch import cat
 from spacy.tokens import Doc
 from tmdm.classes import CharOffsetAnnotation, Provider
 from transformers import LukeTokenizer, LukeForEntityPairClassification
@@ -28,7 +29,7 @@ class OnlineRCProvider(Provider):
 
     def __init__(self, with_coref=False, cuda=-1):
         self.with_coref = with_coref
-        self.cuda = cuda # Not used
+        self.cuda = cuda
         self.model = None
         self.tokenizer = None
         self.load()
@@ -38,6 +39,8 @@ class OnlineRCProvider(Provider):
 
     def load(self):
         self.model = LukeForEntityPairClassification.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
+        if self.cuda == 0:
+            self.model.to("cuda")
         self.tokenizer = LukeTokenizer.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
 
     def convert(self, results, all_ents):
@@ -116,62 +119,119 @@ class OnlineRCProvider(Provider):
                     results_copy[id2][id1] = [37, -1, -1, -1]
 
         #TODO: Also enforce transitive types? member of member, family of family
-
         return results_copy
 
-    def annotate_document(self, doc: Doc):
-        cluster_types = {}
-        if self.with_coref:
-            all_ents = doc._.corefs
-            for nes in doc._.nes:
-                skip = False
-                for coref in doc._.corefs:
-                    if overlaps_or_overlapped_by(coref, nes):
-                        cluster_types[coref.label_] = nes.label_
-                        skip = True
-                        break
-                if not skip:
-                    all_ents.append(nes)
-        else:
-            all_ents = doc._.nes
+    def try_to_run_model(self, texts, entity_spans):
+        try:
+            inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
+            if self.cuda == 0:
+                inputs = inputs.to("cuda")
+            outputs = self.model(**inputs)
+            return outputs.logits
+        except RuntimeError:
+            logger.info("Ran out of memory for RC, halving workload...")
+            half = len(texts) // 2
+            first_logits = self.try_to_run_model(texts[:half], entity_spans[:half])
+            second_logits = self.try_to_run_model(texts[half:], entity_spans[half:])
+            return cat((first_logits, second_logits))
 
-        results = {}
-        text = doc.text
-        for i in range(len(all_ents)):
-            for j in range(len(all_ents)):
-                ent1 = all_ents[i]
-                ent2 = all_ents[j]
+    def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
+        return self.annotate_batch([doc])[0]
 
-                if i == j or (ent1.label_.startswith("CLUSTER") and ent1.label_ == ent2.label_):
-                    continue
+    def annotate_batch(self, docs: List[Doc]) -> List[CharOffsetAnnotation]:
+        # Get all ents in docs (with or without corefs)
+        docs_all_ents = []
+        docs_cluster_types = []
+        for d in range(len(docs)):
+            cluster_types = {}
+            if self.with_coref:
+                all_ents = docs[d]._.corefs
+                for nes in docs[d]._.nes:
+                    skip = False
+                    for coref in docs[d]._.corefs:
+                        # If NE in coref cluster then cluster takes NEs type
+                        if overlaps_or_overlapped_by(coref, nes):
+                            cluster_types[coref.label_] = nes.label_
+                            skip = True
+                            break
+                    # Don't include NE that is the same as a coref already included
+                    if not skip:
+                        all_ents.append(nes)
+            else:
+                all_ents = docs[d]._.nes
 
-                ent1_type = get_nes_or_coref_type(ent1, cluster_types)
-                if ent1_type != "PER" and ent1_type != "ORG":
-                    continue
+            docs_all_ents.append(all_ents)
+            docs_cluster_types.append(cluster_types)
 
-                entity_spans = [(ent1.start_char, ent1.end_char), (ent2.start_char, ent2.end_char)]
-                inputs = self.tokenizer(text, entity_spans=entity_spans, return_tensors="pt")
-                outputs = self.model(**inputs)
+        # Get viable pairs of ents to classify
+        texts = []
+        entity_spans = []
+        entity_combos = []
+        for d in range(len(docs)):
+            doc_text = docs[d].text
+            all_ents = docs_all_ents[d]
+            for i in range(len(all_ents)):
+                for j in range(len(all_ents)):
+                    ent1 = all_ents[i]
+                    ent2 = all_ents[j]
 
-                # Best prediction
-                logits = outputs.logits
-                top_pred_idx = int(logits[0].argmax())
-                top_confidence = float(logits[0][top_pred_idx])
+                    # Not viable if ents are eachother or from same cluster
+                    if i == j or (ent1.label_.startswith("CLUSTER") and ent1.label_ == ent2.label_):
+                        continue
 
-                if top_pred_idx == 0:
-                    continue
+                    # Not viable unless subject is Person or Organisation
+                    ent1_type = get_nes_or_coref_type(ent1, docs_cluster_types[d])
+                    if ent1_type != "PER" and ent1_type != "ORG":
+                        continue
 
-                # 2nd best prediction
-                logits[0][top_pred_idx] = 0
-                second_pred_idx = int(logits[0].argmax())
-                second_confidence = float(logits[0][second_pred_idx])
+                    # Not viable if ents from far apart sentences
+                    same = ent1.sent.start_char == ent2.sent.start_char and ent1.sent.end_char == ent2.sent.end_char
+                    adjacent = (ent2.sent.end_char+1) == ent1.sent.start_char or (ent1.sent.end_char+1) == ent2.sent.start_char
+                    if (not same) and (not adjacent):
+                        continue
 
-                if i not in results:
-                    results[i] = {}
-                results[i][j] = [top_pred_idx, top_confidence, second_pred_idx, second_confidence]
+                    # Ents can spill over sentence end
+                    text_start = min(ent1.sent.start_char, ent2.sent.start_char)
+                    text_end = max([ent1.end_char, ent1.sent.end_char, ent2.end_char, ent2.sent.end_char])
+                    text = doc_text[text_start:text_end]
+                    texts.append(text)
 
-        results = self.postprocess_document(results, all_ents, cluster_types)
-        return self.convert(results, all_ents)
+                    span1 = (ent1.start_char - text_start, ent1.end_char - text_start)
+                    span2 = (ent2.start_char - text_start, ent2.end_char - text_start)
+                    entity_spans.append([span1, span2])
+
+                    entity_combos.append([d, i, j])
+
+        if len(entity_spans) == 0:
+            return [[] for i in range(len(docs))]
+
+        logits = self.try_to_run_model(texts, entity_spans)
+
+        # Get best predictions
+        top_pred_idxs = logits.argmax(-1)
+        top_confidences = logits.max(-1).values
+
+        # Get 2nd best predictions
+        for i in range(len(logits)):
+            logits[i][top_pred_idxs[i]] = 0
+        second_pred_idxs = logits.argmax(-1)
+        second_confidences = logits.max(-1).values
+
+        batch_results = []
+        for d in range(len(docs)):
+            results = {}
+            for idx, c in enumerate(entity_combos):
+                if c[0] == d:
+                    if c[1] not in results:
+                        results[c[1]] = {}
+                    results[c[1]][c[2]] = [int(top_pred_idxs[idx]), float(top_confidences[idx]),
+                                           int(second_pred_idxs[idx]), float(second_confidences[idx])]
+        
+            results = self.postprocess_document(results, docs_all_ents[d], docs_cluster_types[d])
+            results = self.convert(results, docs_all_ents[d])
+            batch_results.append(results)
+
+        return batch_results
 
 
 def get_rc_pipe(with_coref=False, cuda=-1):
