@@ -193,6 +193,7 @@ class OnlineELProvider(Provider):
         self.id2text = id2text
         self.wikipedia_id2local_id = wikipedia_id2local_id
         self.faiss_indexer = faiss_indexer
+        self.ner_model NER.get_model(with_date=self.with_date)
 
     def annotate_document(self, doc: Doc, threshold: int=0.9, top_k: int=10) -> CharOffsetAnnotation:
         return self.annotate_batch([doc], threshold, top_k)[0]
@@ -206,10 +207,10 @@ class OnlineELProvider(Provider):
         }
         predictions = []
         # Load NER model
-        ner_model = NER.get_model(with_date=self.with_date)
+
         for doc in docs:
             text = str(doc)
-            samples = annotate(ner_model, [text])
+            samples = annotate(self.ner_model, [text])
             # prepare the data for biencoder
             dataloader = process_biencoder_dataloader(
                 samples, self.biencoder.tokenizer, self.biencoder_params
