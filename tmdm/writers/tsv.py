@@ -17,7 +17,7 @@ def tsv_writer(docs, out_file="system.tsv", prefix=None):
 					if prefix:
 						kb_url = f"{prefix}/{kb_id}"
 				else:
-					kb_url = "nil"
+					kb_url = "NIL"
 				tsvrow.append(kb_url)
 
 				tsvrow.append(1)
