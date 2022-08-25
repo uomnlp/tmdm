@@ -3,6 +3,7 @@ from flair.data import Sentence
 from dateutil.parser import parse
 import torch
 
+
 def is_date(string, fuzzy=False):
     """
     Return whether the string can be interpreted as a date.
@@ -10,12 +11,13 @@ def is_date(string, fuzzy=False):
     :param string: str, string to check for date
     :param fuzzy: bool, ignore unknown tokens in string if True
     """
-    try: 
+    try:
         parse(string, fuzzy=fuzzy)
         return True
 
     except ValueError:
         return False
+
 
 def get_model(parameters=None, with_date=False):
     return Flair(parameters, with_date)
@@ -33,16 +35,19 @@ class NER_model:
             start_pos - the character idx at which the textual mention starts 
             end_pos - the character idx at which the mention ends"""
         pass
-    
-    
+
+
 class Flair(NER_model):
     def __init__(self, parameters=None, with_date=False):
         self.model = SequenceTagger.load("ner")
-        if with_date: self.date_model = SequenceTagger.load("flair/ner-english-ontonotes-large")
-        else: self.date_model = None
-#         self.model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-large/pytorch_model.bin",map_location='cuda:0'))
-#         if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin",map_location='cuda:0'))
-#         else: self.date_model = None
+        if with_date:
+            self.date_model = SequenceTagger.load("flair/ner-english-ontonotes-large")
+        else:
+            self.date_model = None
+
+    #         self.model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-large/pytorch_model.bin",map_location='cuda:0'))
+    #         if with_date: self.date_model = SequenceTagger._init_model_with_state_dict(torch.load("./BLINK/ner-english-ontonotes-large/pytorch_model.bin",map_location='cuda:0'))
+    #         else: self.date_model = None
 
     def predict(self, sentences):
         mentions = []
@@ -53,7 +58,7 @@ class Flair(NER_model):
             for mention in sent_mentions:
                 mention["sent_idx"] = sent_idx
             mentions.extend(sent_mentions)
-            
+
             if self.date_model:
                 sent_wdate = Sentence(s)
                 self.date_model.predict(sent_wdate)
@@ -65,4 +70,3 @@ class Flair(NER_model):
                     if label == "DATE" and is_date(m) and len(m) > 2:
                         mentions.append(mention)
         return {"sentences": sentences, "mentions": mentions}
-
