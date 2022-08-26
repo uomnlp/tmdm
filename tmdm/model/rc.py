@@ -12,7 +12,6 @@ from tmdm.model.extensions import Annotation, extend
 
 
 def set_relations(self: Doc, relations):
-    # tags, rels = relations
     if self._._relations:
         logger.error("Cannot re-set tokens (yet)!")
         raise NotImplementedError("Cannot re-set tokens (yet)!")
@@ -26,6 +25,7 @@ def relations(self: Doc):
         logger.warning(f"No relations extracted for this document (yet?): {self._._relations}.")
 
     Relation.doc = self.doc
+    # Two tuples in _relations for each Relation instance in relations
     return  [Relation.make(ind) for ind in range(0,len(self._._relations),2)]
 
 
@@ -35,7 +35,6 @@ class Relation():
     def __init__(self, idx, relation_type):
         self.idx = idx
         self.relation_type = relation_type
-
 
     @property
     def subject(self):

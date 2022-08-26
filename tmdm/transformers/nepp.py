@@ -24,7 +24,8 @@ class NEPostProcessProvider(Provider):
         for doc in docs:
             doctuples = []
             for ne in doc._.nes:
-                # Split NEs in two if contain ' and '
+                # Can split NEs in two if contain ' and ' but no longer optimal
+
                 # if " and " in ne.text:
                 #     and_start = ne.start_char + ne.text.index(" and ")
                 #     and_end = and_start + len(" and ")
@@ -35,7 +36,7 @@ class NEPostProcessProvider(Provider):
 
                 doctuples.append([ne.start_char, ne.end_char, ne.label_])
 
-            # Merge until cannot merge anymore
+            # Keep merging pairs of NEs if there are one or fewer characters inbetween until no more merges made
             changed = True
             while changed:
                 changed = False
@@ -54,11 +55,12 @@ class NEPostProcessProvider(Provider):
                     if doctuples[i] == None:
                         del doctuples[i]
 
+            # Convert back to NER tuple output format
             for i in range(len(doctuples)):
                 doctuples[i] = tuple(doctuples[i])
             alltuples.append(doctuples)
 
-        # Enable overwiting of cache
+        # Enable overwiting of cache since merging decreases total amount of NEs
         for doc in docs:
             for ne in doc._.nes:
                 ne.cache.clear()
