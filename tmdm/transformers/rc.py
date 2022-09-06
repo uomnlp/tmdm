@@ -10,7 +10,7 @@ from tmdm.pipe.pipe import PipeElement
 
 def overlaps_or_overlapped_by(ent1, ent2):
     fully_overlaps = (ent1.start_char <= ent2.start_char and ent2.end_char <= ent1.end_char)
-    is_fully_overlaped = (ent2.start_char < ent1.start_char  and ent1.end_char < ent2.end_char)
+    is_fully_overlaped = (ent2.start_char < ent1.start_char and ent1.end_char < ent2.end_char)
     return fully_overlaps or is_fully_overlaped
 
 
@@ -80,13 +80,13 @@ class OnlineRCProvider(Provider):
                     continue
 
                 ent2_type = get_nes_or_coref_type(all_ents[id2], cluster_types)
-                if pred in [4,5,28,29] and ent2_type != "DATE":
+                if pred in [4, 5, 28, 29] and ent2_type != "DATE":
                     results[id1][id2] = -1
                     continue
-                if pred in [10,12,15,18,21,32,33,36,37] and ent2_type != "PER":
+                if pred in [10, 12, 15, 18, 21, 32, 33, 36, 37] and ent2_type != "PER":
                     results[id1][id2] = -1
                     continue
-                if pred in [2,3,13,22,23,24,25,26,27,38,39,40] and ent2_type != "LOC":
+                if pred in [2, 3, 13, 22, 23, 24, 25, 26, 27, 38, 39, 40] and ent2_type != "LOC":
                     results[id1][id2] = -1
                     continue
 
@@ -118,7 +118,7 @@ class OnlineRCProvider(Provider):
                         results_copy[id2] = {}
                     results_copy[id2][id1] = [37, -1, -1, -1]
 
-        #TODO: Also enforce transitive types? member of member, family of family
+        # TODO: Also enforce transitive types? member of member, family of family
         return results_copy
 
     def try_to_run_model(self, texts, entity_spans):
@@ -131,9 +131,18 @@ class OnlineRCProvider(Provider):
         except RuntimeError:
             logger.info("Ran out of memory for RC, halving workload...")
             half = len(texts) // 2
-            first_logits = self.try_to_run_model(texts[:half], entity_spans[:half])
-            second_logits = self.try_to_run_model(texts[half:], entity_spans[half:])
-            return cat((first_logits, second_logits))
+            first_half_texts, first_half_entities = texts[:half], entity_spans[:half]
+            if first_half_texts:
+                first_logits = self.try_to_run_model(first_half_texts, first_half_entities)
+            second_half_texts, second_half_entities = texts[half:], entity_spans[half:]
+            if second_half_texts:
+                second_logits = self.try_to_run_model(second_half_texts, second_half_entities)
+            if first_half_texts and second_half_texts:
+                return cat((first_logits, second_logits))
+            if not first_half_texts:
+                return second_logits
+            if not second_half_texts:
+                return first_logits
 
     def annotate_document(self, doc: Doc) -> CharOffsetAnnotation:
         return self.annotate_batch([doc])[0]
@@ -186,7 +195,8 @@ class OnlineRCProvider(Provider):
 
                     # Not viable if ents from far apart sentences
                     same = ent1.sent.start_char == ent2.sent.start_char and ent1.sent.end_char == ent2.sent.end_char
-                    adjacent = (ent2.sent.end_char+1) == ent1.sent.start_char or (ent1.sent.end_char+1) == ent2.sent.start_char
+                    adjacent = (ent2.sent.end_char + 1) == ent1.sent.start_char or (
+                            ent1.sent.end_char + 1) == ent2.sent.start_char
                     if (not same) and (not adjacent):
                         continue
 
@@ -226,7 +236,7 @@ class OnlineRCProvider(Provider):
                         results[c[1]] = {}
                     results[c[1]][c[2]] = [int(top_pred_idxs[idx]), float(top_confidences[idx]),
                                            int(second_pred_idxs[idx]), float(second_confidences[idx])]
-        
+
             results = self.postprocess_document(results, docs_all_ents[d], docs_cluster_types[d])
             results = self.convert(results, docs_all_ents[d])
             batch_results.append(results)
@@ -235,4 +245,4 @@ class OnlineRCProvider(Provider):
 
 
 def get_rc_pipe(with_coref=False, cuda=-1):
-    return PipeElement(name='rc', field='relations',provider=OnlineRCProvider(with_coref=with_coref, cuda=cuda))
+    return PipeElement(name='rc', field='relations', provider=OnlineRCProvider(with_coref=with_coref, cuda=cuda))
