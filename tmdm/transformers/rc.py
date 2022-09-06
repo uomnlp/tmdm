@@ -44,6 +44,8 @@ class OnlineRCProvider(Provider):
         self.tokenizer = LukeTokenizer.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
 
     def convert(self, results, all_ents):
+        # Format is two tuples per relation: [(<ent1 start>, <ent1 end>, "<relation id>-subj-<relation type>"),
+        #                                     (<ent2 start>, <ent2 end>, "<relation id>-obj-<relation type>"), ...]
         relation_idx = 0
         converted = []
         for id1, relations in results.items():
@@ -188,7 +190,7 @@ class OnlineRCProvider(Provider):
                     if i == j or (ent1.label_.startswith("CLUSTER") and ent1.label_ == ent2.label_):
                         continue
 
-                    # Not viable unless subject is Person or Organisation
+                    # Not viable unless subject is Person or Organisation (TACRED classes)
                     ent1_type = get_nes_or_coref_type(ent1, docs_cluster_types[d])
                     if ent1_type != "PER" and ent1_type != "ORG":
                         continue
@@ -200,7 +202,7 @@ class OnlineRCProvider(Provider):
                     if (not same) and (not adjacent):
                         continue
 
-                    # Ents can spill over sentence end
+                    # Ents can spill over sentence ends so need to extend to include
                     text_start = min(ent1.sent.start_char, ent2.sent.start_char)
                     text_end = max([ent1.end_char, ent1.sent.end_char, ent2.end_char, ent2.sent.end_char])
                     text = doc_text[text_start:text_end]
@@ -215,6 +217,7 @@ class OnlineRCProvider(Provider):
         if len(entity_spans) == 0:
             return [[] for i in range(len(docs))]
 
+        # Get the likeliness of each class for every pair
         logits = self.try_to_run_model(texts, entity_spans)
 
         # Get best predictions
@@ -229,6 +232,7 @@ class OnlineRCProvider(Provider):
 
         batch_results = []
         for d in range(len(docs)):
+            # Get in format for post processing
             results = {}
             for idx, c in enumerate(entity_combos):
                 if c[0] == d:
