@@ -27,7 +27,7 @@ from tmdm.blink.data_process import (
 )
 
 import handystuff.loaders
-from Levenshtein import jaro_winkler
+from Levenshtein import jaro_winkler, ratio
 
 
 def find_within(ents, start, end):
@@ -79,10 +79,11 @@ def convert(doc: Doc, results, rich, nes_only) -> CharOffsetAnnotation:
     for ne, (s, e, l) in zip(doc._.nes, doc._._nes):
         overlap = False
         for r in results:
-            if (r[0] >= s and r[0] <= e) or (r[1] >= s and r[1] <= e):
+            if (s <= r[0] <= e) or (s <= r[1] <= e):
                 overlap = True
                 break
-        if not overlap: results.append((s, e, l))
+        if not overlap:
+            results.append((s, e, l))
     return results
 
 
@@ -265,8 +266,9 @@ class OnlineELProvider(Provider):
                 mention = sample["mention"].lower()
                 title = self.id2title[e_id].lower()
                 label = sample["label"].split()[0]
-                similarity = jaro_winkler(mention, title)
-                logger.debug(f"Similarity between mention  and title: {mention} vs {title} ({similarity:.3f}")
+                similarity = (jaro_winkler(mention, title) + ratio(mention, title)) / 2
+                logger.debug(f"Similarity between mention  and title: {mention} vs {title} "
+                             f"({similarity:.3f}) [threshhold = {threshold}]")
                 # Rule base filtering 1
                 if label == "PER" and len(mention.split()) < 2:
                     prediction.append((start, end, label))
@@ -292,7 +294,7 @@ class OnlineELProvider(Provider):
 
 
 def get_blink_pipe(model: str = None, endpoint='http://kant.cs.man.ac.uk:2222/rest/annotate', rich=True, nes_only=False,
-                   threshold=0.9, blink_folder="./models", with_date=False):
+                   threshold=0.79, blink_folder="./models", with_date=False):
     return PipeElement(name='el', field='nes',
                        provider=OnlineELProvider(rich=rich, nes_only=nes_only, threshold=threshold,
-                                                 blink_folder=blink_folder, with_date=with_date))
+                                                 blink_folder=blink_folder, with_date=with_date), reset_cache=True)

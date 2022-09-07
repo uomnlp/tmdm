@@ -59,10 +59,11 @@ class Pipeline:
 
 
 class PipeElement:
-    def __init__(self, name, field, provider: Union[Provider, Callable[[Collection[Doc], ], Any]]):
+    def __init__(self, name, field, provider: Union[Provider, Callable[[Collection[Doc], ], Any]], reset_cache=False):
         self.name = name
         self.provider = provider
         self.field = field
+        self.reset_cache = True
 
     def __call__(self, doc: Doc):
         try:
@@ -83,3 +84,5 @@ class PipeElement:
             assert len(docs) == len(annotated_batch)
             for doc, annotations in zip(docs, annotated_batch):
                 setattr(doc._, self.field, annotations)
+        if self.reset_cache and self.field:
+            for ann in getattr(doc._, self.field): ann.cache.clear()
