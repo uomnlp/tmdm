@@ -127,7 +127,6 @@ class OnlineRCProvider(Provider):
     def try_to_run_model(self, texts, entity_spans):
         try:
             inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
-            logger.debug(inputs)
             if self.cuda == 0:
                 inputs = inputs.to("cuda")
             outputs = self.model(**inputs)
