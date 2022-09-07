@@ -6,7 +6,7 @@ from spacy.tokens import Doc
 from tmdm.classes import CharOffsetAnnotation, Provider
 from transformers import LukeTokenizer, LukeForEntityPairClassification
 from tmdm.pipe.pipe import PipeElement
-
+import torch
 
 def overlaps_or_overlapped_by(ent1, ent2):
     fully_overlaps = (ent1.start_char <= ent2.start_char and ent2.end_char <= ent1.end_char)
@@ -42,6 +42,7 @@ class OnlineRCProvider(Provider):
         if self.cuda == 0:
             self.model.to("cuda")
         self.tokenizer = LukeTokenizer.from_pretrained("studio-ousia/luke-large-finetuned-tacred")
+        self.model.eval()
 
     def convert(self, results, all_ents):
         # Format is two tuples per relation: [(<ent1 start>, <ent1 end>, "<relation id>-subj-<relation type>"),
@@ -126,6 +127,7 @@ class OnlineRCProvider(Provider):
     def try_to_run_model(self, texts, entity_spans):
         try:
             inputs = self.tokenizer(texts, entity_spans=entity_spans, return_tensors="pt", padding=True)
+            logger.debug(inputs)
             if self.cuda == 0:
                 inputs = inputs.to("cuda")
             outputs = self.model(**inputs)
@@ -217,8 +219,9 @@ class OnlineRCProvider(Provider):
         if len(entity_spans) == 0:
             return [[] for i in range(len(docs))]
 
-        # Get the likeliness of each class for every pair
-        logits = self.try_to_run_model(texts, entity_spans)
+        # Get the likelihood of each class for every pair
+        with torch.no_grad():
+            logits = self.try_to_run_model(texts, entity_spans)
 
         # Get best predictions
         top_pred_idxs = logits.argmax(-1)
