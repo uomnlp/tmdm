@@ -27,6 +27,7 @@ from tmdm.blink.data_process import (
 )
 
 import handystuff.loaders
+from Levenshtein import jaro_winkler
 
 
 def find_within(ents, start, end):
@@ -264,12 +265,19 @@ class OnlineELProvider(Provider):
                 mention = sample["mention"].lower()
                 title = self.id2title[e_id].lower()
                 label = sample["label"].split()[0]
-                #                 similarity = self.nlp(mention).similarity(self.nlp(title))
+                similarity = jaro_winkler(mention, title)
+                logger.debug(f"Similarity between mention  and title: {mention} vs {title} ({similarity:.3f}")
+                # Rule base filtering 1
+                if label == "PER" and len(mention.split()) < 2:
+                    prediction.append((start, end, label))
+                    continue
+                # Rule base filtering 2
+                if label == 'PER' and similarity < threshold:
+                    prediction.append((start, end, label))
+                    continue
 
-                if label == "PER" and len(mention.split()) < 2: continue  # Rule base filtering 1
-                #                 if similarity < threshold: continue # Rule base filtering 2
                 url = id2url[e_id].split("?")[0] + "/" + self.id2title[e_id].replace(' ',
-                                                                                     '_')  # reformat links to wiki pedia style
+                                                                                     '_')  # reformat links to wikipedia style
                 info = {
                     'uri': url,
                     'support': 1,
