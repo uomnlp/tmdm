@@ -181,7 +181,7 @@ class OnlineELProvider(Provider):
         self.rich = rich
         self.nes_only = nes_only
         self.threshold = threshold
-        self.nlp = spacy.load("en_core_web_lg")
+        #self.nlp = spacy.load("en_core_web_lg")
         self.blink_folder = blink_folder
         self.with_date = with_date
         self.load_models()

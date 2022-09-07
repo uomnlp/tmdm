@@ -63,7 +63,7 @@ class PipeElement:
         self.name = name
         self.provider = provider
         self.field = field
-        self.reset_cache = True
+        self.reset_cache = reset_cache
 
     def __call__(self, doc: Doc):
         try:
